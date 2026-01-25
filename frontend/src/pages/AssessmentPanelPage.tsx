@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
 import { useDebounce } from '../hooks/useDebounce'
+import { useAssessmentRealtime } from '../hooks/useRealtime'
 import ComponentTabs from '../components/assessment/ComponentTabs'
 import OutcomeRow from '../components/assessment/OutcomeRow'
 import FeedbackInput from '../components/assessment/FeedbackInput'
 import EngagementSelector from '../components/assessment/EngagementSelector'
 import QuickPassButton from '../components/assessment/QuickPassButton'
+import SyncStatus from '../components/SyncStatus'
 import type {
   Participant,
   TemplateComponent,
@@ -44,6 +46,19 @@ export default function AssessmentPanelPage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [error, setError] = useState<string>('')
+
+  // Real-time subscription
+  const { status: realtimeStatus } = useAssessmentRealtime(
+    participantId || '',
+    () => {
+      // Reload component assessment when changes are detected
+      if (selectedComponentId) {
+        loadComponentAssessment()
+      }
+      // Could also reload overall assessment here if needed
+    },
+    !!participantId // only enable when we have a participant
+  )
 
   useEffect(() => {
     loadAssessmentData()
@@ -419,6 +434,7 @@ export default function AssessmentPanelPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <SyncStatus status={realtimeStatus} />
               {saveStatus === 'saving' && (
                 <span className="text-sm text-gray-600">Saving...</span>
               )}

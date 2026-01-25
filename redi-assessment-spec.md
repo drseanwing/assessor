@@ -817,13 +817,13 @@ serve(async (req) => {
 **Objective:** Enable concurrent multi-assessor access
 
 **Tasks:**
-- [ ] Configure Supabase Realtime subscriptions
-- [ ] Create useRealtime hook for assessment updates
+- [x] Configure Supabase Realtime subscriptions
+- [x] Create useRealtime hook for assessment updates
 - [ ] Implement optimistic UI updates
 - [ ] Add "being edited" indicator (presence)
 - [ ] Handle last-write-wins conflict resolution
-- [ ] Add assessor attribution to changes
-- [ ] Create sync status indicator (connected/reconnecting/offline)
+- [x] Add assessor attribution to changes
+- [x] Create sync status indicator (connected/reconnecting/offline)
 - [ ] Test with multiple simultaneous devices
 
 **Exit Criteria:**
