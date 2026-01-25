@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CourseListPage from './pages/CourseListPage'
 import ParticipantListPage from './pages/ParticipantListPage'
+import AssessmentPage from './pages/AssessmentPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ParticipantListPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/course/:courseId/participant/:participantId/assess" 
+          element={
+            <ProtectedRoute>
+              <AssessmentPage />
             </ProtectedRoute>
           } 
         />
