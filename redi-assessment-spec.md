@@ -779,7 +779,7 @@ serve(async (req) => {
 - [x] Seed REdI course template with all components and outcomes
 - [x] Create React project with Vite + TypeScript
 - [x] Configure Tailwind CSS + shadcn/ui
-- [ ] Implement simple PIN authentication
+- [x] Implement simple PIN authentication
 - [ ] Create assessor management (add/edit/deactivate)
 - [ ] Build course listing page
 - [ ] Implement participant listing for a course
