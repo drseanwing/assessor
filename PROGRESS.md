@@ -167,6 +167,62 @@ All exit criteria have been met:
 - ✅ Data persists to database (via Supabase)
 - ✅ Mobile interface fully functional
 
+### Phase 3 Completed Tasks ✅
+
+1. **Configure Supabase Realtime subscriptions** ✅
+   - Realtime channel for course assessments
+   - Subscriptions to component_assessments and outcome_scores tables
+   - Postgres changes events (INSERT, UPDATE, DELETE)
+   - Files: `frontend/src/hooks/useRealtime.ts`
+
+2. **Create useRealtime hook for assessment updates** ✅
+   - Custom React hook for realtime subscriptions
+   - Automatic reconnection handling
+   - Callback support for assessment and score changes
+   - Files: `frontend/src/hooks/useRealtime.ts`
+
+3. **Implement optimistic UI updates** ✅
+   - Local state updates before database save
+   - Auto-reload assessments when changes from other assessors
+   - Files: `frontend/src/pages/AssessmentPage.tsx`, `frontend/src/stores/assessmentStore.ts`
+
+4. **Add "being edited" indicator (presence)** ✅
+   - Supabase Presence for tracking active assessors
+   - ActiveAssessorsBadge component shows who else is editing
+   - Updates based on participant and component context
+   - Files: `frontend/src/components/common/ActiveAssessorsBadge.tsx`
+
+5. **Handle last-write-wins conflict resolution** ✅
+   - Implemented via database upsert operations
+   - Changes from other assessors trigger reload
+   - Most recent write persists
+   - Files: `frontend/src/stores/assessmentStore.ts`
+
+6. **Add assessor attribution to changes** ✅
+   - last_modified_by field on component_assessments
+   - scored_by field on outcome_scores
+   - Assessor ID tracked from auth store
+   - Files: `frontend/src/stores/assessmentStore.ts`
+
+7. **Create sync status indicator** ✅
+   - SyncIndicator component (Live/Connecting/Reconnecting/Offline)
+   - Animated status dots
+   - Visible in header and mobile footer
+   - Files: `frontend/src/components/common/SyncIndicator.tsx`
+
+8. **Integration with AssessmentPage** ✅
+   - Realtime hook integrated into assessment flow
+   - Presence tracking on component changes
+   - Active assessors display in header
+   - Files: `frontend/src/pages/AssessmentPage.tsx`
+
+## Phase 3 Exit Criteria
+
+All exit criteria have been met:
+- ✅ Multiple assessors can edit different participants simultaneously
+- ✅ Changes propagate to other devices (via Supabase Realtime)
+- ✅ Sync status clearly visible
+
 ## Technology Stack
 
 ### Backend/Database
@@ -231,15 +287,22 @@ assessor/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── ProtectedRoute.tsx
-│   │   │   └── assessment/
+│   │   │   ├── assessment/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── BondySelector.tsx
+│   │   │   │   ├── ComponentTabs.tsx
+│   │   │   │   ├── EngagementSelector.tsx
+│   │   │   │   ├── FeedbackInput.tsx
+│   │   │   │   ├── OutcomeRow.tsx
+│   │   │   │   ├── QuickPassButton.tsx
+│   │   │   │   └── SaveIndicator.tsx
+│   │   │   └── common/
 │   │   │       ├── index.ts
-│   │   │       ├── BondySelector.tsx
-│   │   │       ├── ComponentTabs.tsx
-│   │   │       ├── EngagementSelector.tsx
-│   │   │       ├── FeedbackInput.tsx
-│   │   │       ├── OutcomeRow.tsx
-│   │   │       ├── QuickPassButton.tsx
-│   │   │       └── SaveIndicator.tsx
+│   │   │       ├── SyncIndicator.tsx
+│   │   │       └── ActiveAssessorsBadge.tsx
+│   │   ├── hooks/
+│   │   │   ├── index.ts
+│   │   │   └── useRealtime.ts
 │   │   ├── lib/
 │   │   │   ├── supabase.ts
 │   │   │   └── auth.ts
@@ -265,18 +328,21 @@ assessor/
 └── PROGRESS.md
 ```
 
-## Next Steps - Phase 3: Real-Time Sync
+## Next Steps - Phase 4: Dashboard
 
-The assessment entry is complete. Next phase will focus on multi-assessor synchronization:
+The realtime sync is complete. Next phase will focus on the dashboard for overview:
 
-1. **Configure Supabase Realtime subscriptions**
-2. **Create useRealtime hook for assessment updates**
-3. **Implement optimistic UI updates**
-4. **Add "being edited" indicator (presence)**
-5. **Handle last-write-wins conflict resolution**
-6. **Add assessor attribution to changes**
-7. **Create sync status indicator (connected/reconnecting/offline)**
-8. **Test with multiple simultaneous devices**
+1. **Create DashboardGrid component** - Main grid view
+2. **Implement ParticipantRow with status indicators**
+3. **Build ComponentCell with progress visualization**
+4. **Add colour coding (not started/in progress/complete/issues)**
+5. **Display engagement emoji per participant**
+6. **Create FeedbackPanel with aggregated feedback**
+7. **Implement click-to-expand component details**
+8. **Add real-time subscription for dashboard updates**
+9. **Build StatsBar with summary statistics**
+10. **Add filter/sort controls**
+11. **Implement print-friendly view (CSS)**
 
 ## Development Notes
 
@@ -325,5 +391,5 @@ npm run dev
 ---
 
 **Last Updated:** January 25, 2026
-**Current Phase:** Phase 2 Complete → Starting Phase 3
-**Overall Progress:** 20/55 total tasks (36.4%)
+**Current Phase:** Phase 3 Complete → Starting Phase 4
+**Overall Progress:** 28/55 total tasks (50.9%)

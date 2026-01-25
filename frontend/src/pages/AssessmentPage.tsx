@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useAssessmentStore } from '../stores/assessmentStore'
+import { useRealtime } from '../hooks/useRealtime'
 import { supabase } from '../lib/supabase'
-import type { Participant, Course, TemplateComponent, TemplateOutcome } from '../types/database'
+import type { Participant, TemplateComponent, TemplateOutcome } from '../types/database'
 
 import ComponentTabs from '../components/assessment/ComponentTabs'
 import OutcomeRow from '../components/assessment/OutcomeRow'
@@ -11,13 +12,14 @@ import QuickPassButton from '../components/assessment/QuickPassButton'
 import FeedbackInput from '../components/assessment/FeedbackInput'
 import EngagementSelector from '../components/assessment/EngagementSelector'
 import SaveIndicator from '../components/assessment/SaveIndicator'
+import SyncIndicator from '../components/common/SyncIndicator'
+import ActiveAssessorsBadge from '../components/common/ActiveAssessorsBadge'
 
 export default function AssessmentPage() {
   const { courseId, participantId } = useParams<{ courseId: string; participantId: string }>()
   const { assessor } = useAuthStore()
   const navigate = useNavigate()
   
-  const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   
@@ -45,12 +47,37 @@ export default function AssessmentPage() {
     reset
   } = useAssessmentStore()
   
+  // Realtime hook for multi-assessor sync
+  const { 
+    connectionStatus, 
+    activeAssessors, 
+    trackPresence 
+  } = useRealtime({
+    courseId,
+    participantIds: participantId ? [participantId] : [],
+    onAssessmentChange: useCallback(() => {
+      // Reload assessments when changes come from other assessors
+      loadAssessments()
+    }, [loadAssessments]),
+    onScoreChange: useCallback(() => {
+      // Reload assessments when scores change from other assessors
+      loadAssessments()
+    }, [loadAssessments])
+  })
+  
+  // Track presence when component changes
+  useEffect(() => {
+    if (participantId && activeComponentId) {
+      trackPresence(participantId, activeComponentId)
+    }
+  }, [participantId, activeComponentId, trackPresence])
+  
   const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
     
     try {
-      // Fetch course
+      // Fetch course to get template_id
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .select('*')
@@ -58,7 +85,6 @@ export default function AssessmentPage() {
         .single()
       
       if (courseError) throw courseError
-      setCourse(courseData)
       
       // Fetch participant
       const { data: participantData, error: participantError } = await supabase
@@ -201,7 +227,15 @@ export default function AssessmentPage() {
                 </div>
               </div>
             </div>
-            <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
+            <div className="flex items-center space-x-3">
+              <SyncIndicator status={connectionStatus} />
+              <ActiveAssessorsBadge 
+                assessors={activeAssessors} 
+                currentParticipantId={participantId}
+                currentComponentId={activeComponentId || undefined}
+              />
+              <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
+            </div>
           </div>
         </div>
       </header>
@@ -316,8 +350,9 @@ export default function AssessmentPage() {
       {/* Bottom Navigation (Mobile) */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {assessor?.name} • {course?.course_name}
+          <div className="flex items-center space-x-2">
+            <SyncIndicator status={connectionStatus} />
+            <span className="text-sm text-gray-600">{assessor?.name}</span>
           </div>
           <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
         </div>

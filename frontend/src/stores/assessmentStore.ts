@@ -358,6 +358,20 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   saveChanges: (() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
     
+    // Helper to get current assessor from localStorage
+    const getCurrentAssessorId = (): string | null => {
+      try {
+        const stored = localStorage.getItem('redi-auth-storage')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          return parsed.state?.assessor?.assessor_id || null
+        }
+      } catch {
+        // Ignore parse errors
+      }
+      return null
+    }
+    
     return async () => {
       // Debounce saves
       if (timeoutId) {
@@ -367,6 +381,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       timeoutId = setTimeout(async () => {
         const { participant, componentAssessments, overallAssessment } = get()
         if (!participant) return
+        
+        const assessorId = getCurrentAssessorId()
         
         set({ saveStatus: 'saving' })
         
@@ -386,7 +402,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   participant_id: participant.participant_id,
                   component_id: componentId,
                   component_feedback: assessment.feedback,
-                  is_passed_quick: assessment.isQuickPassed
+                  is_passed_quick: assessment.isQuickPassed,
+                  last_modified_by: assessorId
                 })
                 .select()
                 .single()
@@ -411,6 +428,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 .update({
                   component_feedback: assessment.feedback,
                   is_passed_quick: assessment.isQuickPassed,
+                  last_modified_by: assessorId,
                   last_modified_at: new Date().toISOString()
                 })
                 .eq('assessment_id', assessmentId)
@@ -429,6 +447,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   outcome_id: outcomeId,
                   bondy_score: score.bondyScore,
                   binary_score: score.binaryScore,
+                  scored_by: assessorId,
                   scored_at: new Date().toISOString()
                 }, {
                   onConflict: 'assessment_id,outcome_id'
@@ -462,7 +481,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 .insert({
                   participant_id: participant.participant_id,
                   overall_feedback: overallAssessment.feedback,
-                  engagement_score: overallAssessment.engagementScore
+                  engagement_score: overallAssessment.engagementScore,
+                  last_modified_by: assessorId
                 })
                 .select()
                 .single()
@@ -482,6 +502,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 .update({
                   overall_feedback: overallAssessment.feedback,
                   engagement_score: overallAssessment.engagementScore,
+                  last_modified_by: assessorId,
                   last_modified_at: new Date().toISOString()
                 })
                 .eq('overall_id', overallAssessment.overallId)
