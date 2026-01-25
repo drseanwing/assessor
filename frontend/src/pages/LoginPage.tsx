@@ -15,9 +15,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string>('')
 
   useEffect(() => {
-    // If already authenticated, redirect to dashboard
+    // If already authenticated, redirect to courses
     if (isAuthenticated()) {
-      navigate('/dashboard')
+      navigate('/courses')
     }
 
     // Load assessors
@@ -66,8 +66,8 @@ export default function LoginPage() {
       setAssessor(result.assessor)
       setSessionExpiry(expiryTime)
       
-      // Navigate to dashboard
-      navigate('/dashboard')
+      // Navigate to courses
+      navigate('/courses')
     } else {
       setError(result.error || 'Login failed')
       setPin('')

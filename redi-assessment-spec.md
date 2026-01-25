@@ -781,8 +781,8 @@ serve(async (req) => {
 - [x] Configure Tailwind CSS + shadcn/ui
 - [x] Implement simple PIN authentication
 - [ ] Create assessor management (add/edit/deactivate)
-- [ ] Build course listing page
-- [ ] Implement participant listing for a course
+- [x] Build course listing page
+- [x] Implement participant listing for a course
 
 **Exit Criteria:**
 - Can log in with PIN
