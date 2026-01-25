@@ -774,15 +774,15 @@ serve(async (req) => {
 **Objective:** Establish core infrastructure and data layer
 
 **Tasks:**
-- [ ] Set up Supabase project (or self-hosted Postgres)
-- [ ] Implement database schema with migrations
-- [ ] Seed REdI course template with all components and outcomes
-- [ ] Create React project with Vite + TypeScript
-- [ ] Configure Tailwind CSS + shadcn/ui
-- [ ] Implement simple PIN authentication
+- [x] Set up Supabase project (or self-hosted Postgres)
+- [x] Implement database schema with migrations
+- [x] Seed REdI course template with all components and outcomes
+- [x] Create React project with Vite + TypeScript
+- [x] Configure Tailwind CSS + shadcn/ui
+- [x] Implement simple PIN authentication
 - [ ] Create assessor management (add/edit/deactivate)
-- [ ] Build course listing page
-- [ ] Implement participant listing for a course
+- [x] Build course listing page
+- [x] Implement participant listing for a course
 
 **Exit Criteria:**
 - Can log in with PIN
