@@ -777,8 +777,8 @@ serve(async (req) => {
 - [x] Set up Supabase project (or self-hosted Postgres)
 - [x] Implement database schema with migrations
 - [x] Seed REdI course template with all components and outcomes
-- [ ] Create React project with Vite + TypeScript
-- [ ] Configure Tailwind CSS + shadcn/ui
+- [x] Create React project with Vite + TypeScript
+- [x] Configure Tailwind CSS + shadcn/ui
 - [ ] Implement simple PIN authentication
 - [ ] Create assessor management (add/edit/deactivate)
 - [ ] Build course listing page
