@@ -223,6 +223,83 @@ All exit criteria have been met:
 - ✅ Changes propagate to other devices (via Supabase Realtime)
 - ✅ Sync status clearly visible
 
+### Phase 4 Completed Tasks ✅
+
+1. **Create DashboardGrid component** ✅
+   - Grid view with rows = participants, columns = components
+   - Participant info with role badges
+   - Expandable row details on click
+   - Files: `frontend/src/components/dashboard/DashboardGrid.tsx`
+
+2. **Implement ParticipantRow with status indicators** ✅
+   - Participant name, payroll, designation display
+   - Role badges (TL/TM/Both)
+   - Overall status icon (complete/in progress/issues/not started)
+   - Files: `frontend/src/components/dashboard/DashboardGrid.tsx`
+
+3. **Build ComponentCell with progress visualization** ✅
+   - Progress bar showing scored/total outcomes
+   - Percentage indicator for in-progress
+   - Check mark for complete
+   - Warning icon for issues
+   - Files: `frontend/src/components/dashboard/ComponentCell.tsx`
+
+4. **Add colour coding** ✅
+   - Green = Complete
+   - Blue = In Progress
+   - Gray = Not Started
+   - Orange = Issues (marginal/not observed scores)
+   - Files: `frontend/src/components/dashboard/ComponentCell.tsx`
+
+5. **Display engagement emoji per participant** ✅
+   - Emoji column showing participant engagement score
+   - Uses existing ENGAGEMENT_OPTIONS
+   - Files: `frontend/src/pages/CourseDashboardPage.tsx`
+
+6. **Create FeedbackPanel with aggregated feedback** ✅
+   - Collapsible panel showing all feedback
+   - Sorted by timestamp (most recent first)
+   - Shows participant, component, and assessor attribution
+   - Files: `frontend/src/components/dashboard/FeedbackPanel.tsx`
+
+7. **Implement click-to-expand component details** ✅
+   - Expandable row showing component-level details
+   - Feedback quotes per component
+   - Quick Passed indicator
+   - Scored count per component
+   - Files: `frontend/src/components/dashboard/DashboardGrid.tsx`
+
+8. **Add real-time subscription for dashboard updates** ✅
+   - Uses existing useRealtime hook
+   - Auto-refreshes on assessment changes
+   - Connection status displayed
+   - Files: `frontend/src/pages/CourseDashboardPage.tsx`
+
+9. **Build StatsBar with summary statistics** ✅
+   - Progress bar showing total completion
+   - Completed/total participants
+   - Pass rate percentage
+   - Issues count
+   - Files: `frontend/src/components/dashboard/StatsBar.tsx`
+
+10. **Add filter/sort controls** ✅
+    - Filter: All / Incomplete / Complete
+    - Sort by: Name / Progress
+    - Files: `frontend/src/pages/CourseDashboardPage.tsx`
+
+11. **Implement print-friendly view (CSS)** ✅
+    - Print media queries
+    - Hidden controls when printing
+    - Clean layout for printed reports
+    - Files: `frontend/src/pages/CourseDashboardPage.tsx`
+
+## Phase 4 Exit Criteria
+
+All exit criteria have been met:
+- ✅ Dashboard shows all participants with live status
+- ✅ Updates appear within seconds of entry (via realtime)
+- ✅ All feedback visible and attributed
+
 ## Technology Stack
 
 ### Backend/Database
@@ -274,6 +351,15 @@ All exit criteria have been met:
 6. Adds overall engagement score and feedback
 7. All changes auto-save with visual confirmation
 
+### Dashboard Flow
+1. Assessor views course dashboard
+2. Sees grid of all participants with component status
+3. Color-coded progress indicators (green/blue/gray/orange)
+4. Engagement emoji for each participant
+5. Expandable rows show component details and feedback
+6. Filter and sort controls for efficient viewing
+7. Print-friendly view for end-of-day reporting
+
 ## Project Structure
 
 ```
@@ -296,10 +382,16 @@ assessor/
 │   │   │   │   ├── OutcomeRow.tsx
 │   │   │   │   ├── QuickPassButton.tsx
 │   │   │   │   └── SaveIndicator.tsx
-│   │   │   └── common/
+│   │   │   ├── common/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── SyncIndicator.tsx
+│   │   │   │   └── ActiveAssessorsBadge.tsx
+│   │   │   └── dashboard/
 │   │   │       ├── index.ts
-│   │   │       ├── SyncIndicator.tsx
-│   │   │       └── ActiveAssessorsBadge.tsx
+│   │   │       ├── DashboardGrid.tsx
+│   │   │       ├── ComponentCell.tsx
+│   │   │       ├── FeedbackPanel.tsx
+│   │   │       └── StatsBar.tsx
 │   │   ├── hooks/
 │   │   │   ├── index.ts
 │   │   │   └── useRealtime.ts
@@ -310,6 +402,7 @@ assessor/
 │   │   │   ├── LoginPage.tsx
 │   │   │   ├── DashboardPage.tsx
 │   │   │   ├── CourseListPage.tsx
+│   │   │   ├── CourseDashboardPage.tsx
 │   │   │   ├── ParticipantListPage.tsx
 │   │   │   └── AssessmentPage.tsx
 │   │   ├── stores/
@@ -328,21 +421,18 @@ assessor/
 └── PROGRESS.md
 ```
 
-## Next Steps - Phase 4: Dashboard
+## Next Steps - Phase 5: SharePoint Integration
 
-The realtime sync is complete. Next phase will focus on the dashboard for overview:
+The dashboard is complete. Next phase will focus on SharePoint integration:
 
-1. **Create DashboardGrid component** - Main grid view
-2. **Implement ParticipantRow with status indicators**
-3. **Build ComponentCell with progress visualization**
-4. **Add colour coding (not started/in progress/complete/issues)**
-5. **Display engagement emoji per participant**
-6. **Create FeedbackPanel with aggregated feedback**
-7. **Implement click-to-expand component details**
-8. **Add real-time subscription for dashboard updates**
-9. **Build StatsBar with summary statistics**
-10. **Add filter/sort controls**
-11. **Implement print-friendly view (CSS)**
+1. **Register Azure AD application for API access**
+2. **Create SharePoint sync Edge Function**
+3. **Implement OAuth token management (refresh)**
+4. **Build course import flow**
+5. **Add participant sync (create/update)**
+6. **Handle missing participants (manual add)**
+7. **Add sync status and error handling**
+8. **Create manual refresh trigger**
 
 ## Development Notes
 
@@ -391,5 +481,5 @@ npm run dev
 ---
 
 **Last Updated:** January 25, 2026
-**Current Phase:** Phase 3 Complete → Starting Phase 4
-**Overall Progress:** 28/55 total tasks (50.9%)
+**Current Phase:** Phase 4 Complete → Starting Phase 5
+**Overall Progress:** 39/55 total tasks (70.9%)

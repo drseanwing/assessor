@@ -208,9 +208,18 @@ export default function CourseListPage() {
                   </div>
                 </div>
                 
-                <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
+                <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/course/${course.course_id}/dashboard`)
+                    }}
+                    className="text-sm font-medium text-purple-600 hover:text-purple-800"
+                  >
+                    Dashboard →
+                  </button>
                   <button className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                    View Participants →
+                    Participants →
                   </button>
                 </div>
               </div>
