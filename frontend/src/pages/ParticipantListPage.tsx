@@ -72,7 +72,7 @@ export default function ParticipantListPage() {
   }
 
   const handleParticipantClick = (participantId: string) => {
-    navigate(`/course/${courseId}/participant/${participantId}/assess`)
+    navigate(`/participant/${participantId}/assess`)
   }
 
   const handleBack = () => {

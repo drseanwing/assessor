@@ -794,18 +794,18 @@ serve(async (req) => {
 **Objective:** Build the core assessment data entry interface
 
 **Tasks:**
-- [ ] Create AssessmentPanel layout (mobile-first)
-- [ ] Build ComponentTabs navigation
-- [ ] Implement BondySelector component (5-point scale)
-- [ ] Add binary pass/fail toggle for binary outcomes
-- [ ] Display outcome applicability badges (TL/TM)
-- [ ] Implement mandatory outcome highlighting
-- [ ] Build QuickPassButton with "Independent" auto-fill
-- [ ] Create FeedbackInput (expandable textarea)
-- [ ] Implement EngagementSelector (emoji scale)
-- [ ] Add overall feedback section
-- [ ] Implement auto-save on change (debounced)
-- [ ] Add visual save confirmation
+- [x] Create AssessmentPanel layout (mobile-first)
+- [x] Build ComponentTabs navigation
+- [x] Implement BondySelector component (5-point scale)
+- [x] Add binary pass/fail toggle for binary outcomes
+- [x] Display outcome applicability badges (TL/TM)
+- [x] Implement mandatory outcome highlighting
+- [x] Build QuickPassButton with "Independent" auto-fill
+- [x] Create FeedbackInput (expandable textarea)
+- [x] Implement EngagementSelector (emoji scale)
+- [x] Add overall feedback section
+- [x] Implement auto-save on change (debounced)
+- [x] Add visual save confirmation
 
 **Exit Criteria:**
 - Can fully assess one participant across all components
