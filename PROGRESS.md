@@ -300,6 +300,67 @@ All exit criteria have been met:
 - ✅ Updates appear within seconds of entry (via realtime)
 - ✅ All feedback visible and attributed
 
+### Phase 5 Tasks - SharePoint Integration 🔄
+
+**Status: Placeholder implemented - Requires Azure AD setup**
+
+1. **SharePoint Integration Module** 🔄
+   - Placeholder module created with documentation
+   - Types defined for SharePoint data structures
+   - Ready for implementation when Azure AD is configured
+   - Files: `frontend/src/lib/sharepoint.ts`
+
+**Note:** Full implementation requires:
+- Azure AD application registration at https://portal.azure.com
+- SharePoint API permissions (Sites.Read.All, User.Read)
+- Environment variables for AZURE_CLIENT_ID, TENANT_ID, SHAREPOINT_SITE_ID, SHAREPOINT_LIST_ID
+
+### Phase 6 Completed Tasks ✅
+
+1. **IndexedDB for Offline Support** ✅
+   - Database initialization and schema
+   - Assessment data caching
+   - Pending changes queue
+   - Files: `frontend/src/lib/db.ts`
+
+2. **Offline Sync Hook** ✅
+   - useOfflineSync hook for offline detection
+   - Automatic sync on reconnection
+   - Pending change queue management
+   - Retry logic with max attempts
+   - Files: `frontend/src/hooks/useOfflineSync.ts`
+
+3. **Offline Indicator Component** ✅
+   - Visual indicator for offline status
+   - Pending changes count display
+   - Manual sync button
+   - Files: `frontend/src/components/common/OfflineIndicator.tsx`
+
+4. **Vercel Deployment Configuration** ✅
+   - vercel.json with build and routing config
+   - Environment variable placeholders
+   - Files: `vercel.json`
+
+5. **Docker Deployment Configuration** ✅
+   - Multi-stage Dockerfile
+   - nginx configuration with SPA routing
+   - Security headers and gzip compression
+   - Health check endpoint
+   - Files: `Dockerfile`, `nginx.conf`
+
+6. **Environment Configuration** ✅
+   - Updated .env.example with all variables
+   - SharePoint integration placeholders
+   - Files: `frontend/.env.example`
+
+## Phase 6 Exit Criteria (Partial)
+
+- ✅ Offline support infrastructure ready
+- ✅ Deployment configurations created
+- ⏸️ E2E tests (requires Playwright setup)
+- ⏸️ Performance testing (requires running environment)
+- ⏸️ Production deployment (requires Supabase instance)
+
 ## Technology Stack
 
 ### Backend/Database
@@ -394,10 +455,13 @@ assessor/
 │   │   │       └── StatsBar.tsx
 │   │   ├── hooks/
 │   │   │   ├── index.ts
-│   │   │   └── useRealtime.ts
+│   │   │   ├── useRealtime.ts
+│   │   │   └── useOfflineSync.ts
 │   │   ├── lib/
 │   │   │   ├── supabase.ts
-│   │   │   └── auth.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── db.ts
+│   │   │   └── sharepoint.ts
 │   │   ├── pages/
 │   │   │   ├── LoginPage.tsx
 │   │   │   ├── DashboardPage.tsx
@@ -417,22 +481,25 @@ assessor/
 │   ├── tailwind.config.js
 │   ├── vite.config.ts
 │   └── README.md
+├── Dockerfile
+├── nginx.conf
+├── vercel.json
 ├── redi-assessment-spec.md
 └── PROGRESS.md
 ```
 
-## Next Steps - Phase 5: SharePoint Integration
+## Remaining Work
 
-The dashboard is complete. Next phase will focus on SharePoint integration:
+### Phase 5: SharePoint Integration (Requires External Setup)
+- Azure AD application registration required
+- SharePoint API permissions needed
+- Placeholder module at `frontend/src/lib/sharepoint.ts`
 
-1. **Register Azure AD application for API access**
-2. **Create SharePoint sync Edge Function**
-3. **Implement OAuth token management (refresh)**
-4. **Build course import flow**
-5. **Add participant sync (create/update)**
-6. **Handle missing participants (manual add)**
-7. **Add sync status and error handling**
-8. **Create manual refresh trigger**
+### Phase 6: Additional Items (Requires External Setup)
+- E2E tests with Playwright
+- Performance testing with 30+ participants
+- Production Supabase instance setup
+- Production deployment and smoke testing
 
 ## Development Notes
 
@@ -481,5 +548,10 @@ npm run dev
 ---
 
 **Last Updated:** January 25, 2026
-**Current Phase:** Phase 4 Complete → Starting Phase 5
-**Overall Progress:** 39/55 total tasks (70.9%)
+**Current Phase:** Phases 1-4 Complete, Phase 5-6 Partial
+**Overall Progress:** 45/55 total tasks (81.8%)
+
+**Note:** Remaining tasks require external setup:
+- SharePoint integration requires Azure AD registration
+- E2E tests require Playwright setup
+- Production deployment requires Supabase instance
