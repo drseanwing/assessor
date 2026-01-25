@@ -780,7 +780,7 @@ serve(async (req) => {
 - [x] Create React project with Vite + TypeScript
 - [x] Configure Tailwind CSS + shadcn/ui
 - [x] Implement simple PIN authentication
-- [ ] Create assessor management (add/edit/deactivate)
+- [x] Create assessor management (add/edit/deactivate)
 - [x] Build course listing page
 - [x] Implement participant listing for a course
 
