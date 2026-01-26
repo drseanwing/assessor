@@ -3,8 +3,8 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CourseListPage from './pages/CourseListPage'
 import ParticipantListPage from './pages/ParticipantListPage'
-import AssessorManagementPage from './pages/AssessorManagementPage'
-import AssessmentPanelPage from './pages/AssessmentPanelPage'
+import AssessmentPage from './pages/AssessmentPage'
+import CourseDashboardPage from './pages/CourseDashboardPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -29,6 +29,14 @@ function App() {
           } 
         />
         <Route 
+          path="/course/:courseId/dashboard" 
+          element={
+            <ProtectedRoute>
+              <CourseDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/course/:courseId/participants" 
           element={
             <ProtectedRoute>
@@ -37,18 +45,10 @@ function App() {
           } 
         />
         <Route 
-          path="/assessors" 
+          path="/course/:courseId/participant/:participantId/assess" 
           element={
             <ProtectedRoute>
-              <AssessorManagementPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/participant/:participantId/assess" 
-          element={
-            <ProtectedRoute>
-              <AssessmentPanelPage />
+              <AssessmentPage />
             </ProtectedRoute>
           } 
         />
