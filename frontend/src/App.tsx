@@ -3,6 +3,8 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CourseListPage from './pages/CourseListPage'
 import ParticipantListPage from './pages/ParticipantListPage'
+import AssessmentPage from './pages/AssessmentPage'
+import CourseDashboardPage from './pages/CourseDashboardPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -27,10 +29,26 @@ function App() {
           } 
         />
         <Route 
+          path="/course/:courseId/dashboard" 
+          element={
+            <ProtectedRoute>
+              <CourseDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/course/:courseId/participants" 
           element={
             <ProtectedRoute>
               <ParticipantListPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/course/:courseId/participant/:participantId/assess" 
+          element={
+            <ProtectedRoute>
+              <AssessmentPage />
             </ProtectedRoute>
           } 
         />
