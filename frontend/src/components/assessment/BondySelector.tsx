@@ -7,36 +7,45 @@ interface BondySelectorProps {
 }
 
 export default function BondySelector({ value, onChange, disabled = false }: BondySelectorProps) {
+  const getScoreColor = (score: BondyScore, isSelected: boolean) => {
+    if (!isSelected) return 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+    
+    switch (score) {
+      case 'INDEPENDENT':
+        return 'bg-green-500 text-white'
+      case 'SUPERVISED':
+        return 'bg-lime-500 text-white'
+      case 'ASSISTED':
+        return 'bg-yellow-500 text-white'
+      case 'MARGINAL':
+        return 'bg-orange-500 text-white'
+      case 'NOT_OBSERVED':
+        return 'bg-gray-500 text-white'
+      default:
+        return 'bg-gray-100 text-gray-600'
+    }
+  }
+
   return (
-    <div className="flex gap-1">
+    <div className="flex space-x-1">
       {BONDY_SCALE_OPTIONS.map((option) => {
         const isSelected = value === option.score
-        
         return (
           <button
-            key={option.value}
+            key={option.score}
             type="button"
-            onClick={() => onChange(option.score)}
+            onClick={() => !disabled && onChange(option.score)}
             disabled={disabled}
             className={`
-              flex-1 px-2 py-2 rounded text-sm font-semibold transition-all
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
-              ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:scale-105'}
-              ${
-                isSelected
-                  ? option.color === 'green'
-                    ? 'bg-green-600 text-white'
-                    : option.color === 'light-green'
-                    ? 'bg-green-500 text-white'
-                    : option.color === 'yellow'
-                    ? 'bg-yellow-500 text-white'
-                    : option.color === 'orange'
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-500 text-white'
-                  : 'bg-gray-100 text-gray-700 border border-gray-300'
-              }
+              w-10 h-10 rounded-lg font-semibold text-sm
+              flex items-center justify-center
+              transition-all duration-150
+              ${getScoreColor(option.score, isSelected)}
+              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${isSelected ? 'ring-2 ring-offset-2 ring-blue-400' : ''}
             `}
-            title={option.description}
+            title={`${option.label}: ${option.description}`}
+            aria-label={option.label}
           >
             {option.shortLabel}
           </button>

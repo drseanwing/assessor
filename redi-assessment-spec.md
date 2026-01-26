@@ -780,7 +780,7 @@ serve(async (req) => {
 - [x] Create React project with Vite + TypeScript
 - [x] Configure Tailwind CSS + shadcn/ui
 - [x] Implement simple PIN authentication
-- [x] Create assessor management (add/edit/deactivate)
+- [ ] Create assessor management (add/edit/deactivate)
 - [x] Build course listing page
 - [x] Implement participant listing for a course
 
@@ -794,18 +794,18 @@ serve(async (req) => {
 **Objective:** Build the core assessment data entry interface
 
 **Tasks:**
-- [x] Create AssessmentPanel layout (mobile-first)
-- [x] Build ComponentTabs navigation
-- [x] Implement BondySelector component (5-point scale)
-- [x] Add binary pass/fail toggle for binary outcomes
-- [x] Display outcome applicability badges (TL/TM)
-- [x] Implement mandatory outcome highlighting
-- [x] Build QuickPassButton with "Independent" auto-fill
-- [x] Create FeedbackInput (expandable textarea)
-- [x] Implement EngagementSelector (emoji scale)
-- [x] Add overall feedback section
-- [x] Implement auto-save on change (debounced)
-- [x] Add visual save confirmation
+- [ ] Create AssessmentPanel layout (mobile-first)
+- [ ] Build ComponentTabs navigation
+- [ ] Implement BondySelector component (5-point scale)
+- [ ] Add binary pass/fail toggle for binary outcomes
+- [ ] Display outcome applicability badges (TL/TM)
+- [ ] Implement mandatory outcome highlighting
+- [ ] Build QuickPassButton with "Independent" auto-fill
+- [ ] Create FeedbackInput (expandable textarea)
+- [ ] Implement EngagementSelector (emoji scale)
+- [ ] Add overall feedback section
+- [ ] Implement auto-save on change (debounced)
+- [ ] Add visual save confirmation
 
 **Exit Criteria:**
 - Can fully assess one participant across all components
@@ -817,13 +817,13 @@ serve(async (req) => {
 **Objective:** Enable concurrent multi-assessor access
 
 **Tasks:**
-- [x] Configure Supabase Realtime subscriptions
-- [x] Create useRealtime hook for assessment updates
+- [ ] Configure Supabase Realtime subscriptions
+- [ ] Create useRealtime hook for assessment updates
 - [ ] Implement optimistic UI updates
 - [ ] Add "being edited" indicator (presence)
 - [ ] Handle last-write-wins conflict resolution
-- [x] Add assessor attribution to changes
-- [x] Create sync status indicator (connected/reconnecting/offline)
+- [ ] Add assessor attribution to changes
+- [ ] Create sync status indicator (connected/reconnecting/offline)
 - [ ] Test with multiple simultaneous devices
 
 **Exit Criteria:**
