@@ -44,14 +44,11 @@ export async function loginWithPin(credentials: LoginCredentials): Promise<Login
 
     // Hash the provided PIN and compare
     // In production, this comparison should happen on the backend
-    // const hashedPin = await hashPin(credentials.pin)
-    // In production: if (hashedPin !== assessor.pin_hash) { return error }
-    
-    // For development/demo, we'll accept any 4-digit PIN
-    if (credentials.pin.length !== 4 || !/^\d{4}$/.test(credentials.pin)) {
+    const hashedPin = await hashPin(credentials.pin)
+    if (hashedPin !== assessor.pin_hash) {
       return {
         success: false,
-        error: 'Invalid PIN format'
+        error: 'Invalid PIN'
       }
     }
 

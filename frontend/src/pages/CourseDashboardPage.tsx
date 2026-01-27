@@ -58,41 +58,15 @@ export default function CourseDashboardPage() {
   const [sortBy, setSortBy] = useState<'name' | 'progress'>('name')
   
   // Get participant IDs for realtime subscription
-  const participantIds = useMemo(() => 
-    participants.map(p => p.participant_id), 
+  const participantIds = useMemo(() =>
+    participants.map(p => p.participant_id),
     [participants]
   )
-  
-  // Realtime updates
-  const { connectionStatus } = useRealtime({
-    courseId,
-    participantIds,
-    onAssessmentChange: useCallback(() => {
-      loadAssessmentData()
-    }, []),
-    onScoreChange: useCallback(() => {
-      loadAssessmentData()
-    }, [])
-  })
-  
-  // Initial data load
-  useEffect(() => {
-    if (courseId) {
-      loadCourseData()
-    }
-  }, [courseId])
-  
-  // Reload assessment data when participants or components change
-  useEffect(() => {
-    if (participants.length > 0 && components.length > 0) {
-      loadAssessmentData()
-    }
-  }, [participants, components])
-  
-  const loadCourseData = async () => {
+
+  const loadCourseData = useCallback(async () => {
     setLoading(true)
     setError('')
-    
+
     try {
       // Fetch course
       const { data: courseData, error: courseError } = await supabase
@@ -100,30 +74,30 @@ export default function CourseDashboardPage() {
         .select('*')
         .eq('course_id', courseId)
         .single()
-      
+
       if (courseError) throw courseError
       setCourse(courseData)
-      
+
       // Fetch participants
       const { data: participantsData, error: participantsError } = await supabase
         .from('participants')
         .select('*')
         .eq('course_id', courseId)
         .order('candidate_name', { ascending: true })
-      
+
       if (participantsError) throw participantsError
       setParticipants(participantsData || [])
-      
+
       // Fetch template components
       const { data: componentsData, error: componentsError } = await supabase
         .from('template_components')
         .select('*')
         .eq('template_id', courseData.template_id)
         .order('component_order', { ascending: true })
-      
+
       if (componentsError) throw componentsError
       setComponents(componentsData || [])
-      
+
       // Fetch outcomes for each component
       const outcomesMap: Record<string, TemplateOutcome[]> = {}
       for (const component of componentsData || []) {
@@ -132,22 +106,22 @@ export default function CourseDashboardPage() {
           .select('*')
           .eq('component_id', component.component_id)
           .order('outcome_order', { ascending: true })
-        
+
         if (outcomesData) {
           outcomesMap[component.component_id] = outcomesData
         }
       }
       setOutcomes(outcomesMap)
-      
+
     } catch (err) {
       console.error('Error loading course data:', err)
       setError('Failed to load dashboard. Please try again.')
     } finally {
       setLoading(false)
     }
-  }
-  
-  const loadAssessmentData = async () => {
+  }, [courseId])
+
+  const loadAssessmentData = useCallback(async () => {
     if (participants.length === 0 || components.length === 0) return
     
     try {
@@ -262,8 +236,34 @@ export default function CourseDashboardPage() {
     } catch (err) {
       console.error('Error loading assessment data:', err)
     }
-  }
-  
+  }, [participants, components, outcomes])
+
+  // Realtime updates
+  const { connectionStatus } = useRealtime({
+    courseId,
+    participantIds,
+    onAssessmentChange: useCallback(() => {
+      loadAssessmentData()
+    }, [loadAssessmentData]),
+    onScoreChange: useCallback(() => {
+      loadAssessmentData()
+    }, [loadAssessmentData])
+  })
+
+  // Initial data load
+  useEffect(() => {
+    if (courseId) {
+      loadCourseData()
+    }
+  }, [courseId, loadCourseData])
+
+  // Reload assessment data when participants or components change
+  useEffect(() => {
+    if (participants.length > 0 && components.length > 0) {
+      loadAssessmentData()
+    }
+  }, [participants, components, loadAssessmentData])
+
   const handleParticipantClick = (participantId: string) => {
     navigate(`/course/${courseId}/participant/${participantId}/assess`)
   }

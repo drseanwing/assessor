@@ -42,7 +42,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
   useEffect(() => {
     initDB().catch(console.error)
     updatePendingCount()
-  }, [])
+  }, [updatePendingCount])
 
   // Listen for online/offline events
   useEffect(() => {
@@ -63,7 +63,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [])
+  }, [syncPendingChanges])
 
   const updatePendingCount = useCallback(async () => {
     try {

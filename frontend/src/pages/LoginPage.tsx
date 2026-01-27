@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { loginWithPin, fetchActiveAssessors } from '../lib/auth'
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
 
+  const loadAssessors = useCallback(async () => {
+    const data = await fetchActiveAssessors()
+    setAssessors(data)
+    if (data.length > 0) {
+      setSelectedAssessor(data[0].assessor_id)
+    }
+  }, [])
+
   useEffect(() => {
     // If already authenticated, redirect to courses
     if (isAuthenticated()) {
@@ -22,15 +30,7 @@ export default function LoginPage() {
 
     // Load assessors
     loadAssessors()
-  }, [isAuthenticated, navigate])
-
-  const loadAssessors = async () => {
-    const data = await fetchActiveAssessors()
-    setAssessors(data)
-    if (data.length > 0) {
-      setSelectedAssessor(data[0].assessor_id)
-    }
-  }
+  }, [isAuthenticated, navigate, loadAssessors])
 
   const handlePinChange = (value: string) => {
     // Only allow digits and max 4 characters

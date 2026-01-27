@@ -13,11 +13,11 @@ The REdI Assessment System enables multiple assessors to simultaneously evaluate
 - **Quick Pass Workflow** - Complete assessment in under 3 minutes for passing candidates
 - **Bondy Scale Assessment** - 5-point competency scale (Independent → Not Observed)
 - **Mobile-First Design** - Optimized for tablets and mobile devices
-- **Offline Support** - Continue working without internet (coming in Phase 6)
+- **Offline Support** - Continue working without internet (implemented)
 
 ## Current Status
 
-**Phase 1: Foundation - COMPLETE** ✅
+**Phase 4: Dashboard - COMPLETE** ✅
 
 See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
@@ -25,7 +25,7 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 14+ (or Supabase account)
 - npm or yarn
 
@@ -119,28 +119,28 @@ assessor/
 - PIN authentication
 - Course and participant listing
 
-### Phase 2: Assessment Entry (Next)
+### Phase 2: Assessment Entry ✅ COMPLETE
 - Assessment panel layout
 - Bondy scale selector
 - Quick pass button
 - Auto-save functionality
 
-### Phase 3: Real-Time Sync
+### Phase 3: Real-Time Sync ✅ COMPLETE
 - Realtime subscriptions
 - Presence indicators
 - Conflict resolution
 
-### Phase 4: Dashboard
+### Phase 4: Dashboard ✅ COMPLETE
 - Dashboard grid view
 - Progress visualization
 - Feedback aggregation
 
-### Phase 5: SharePoint Integration
+### Phase 5: SharePoint Integration (Partial)
 - Course import from SharePoint
 - Participant sync
 - OAuth authentication
 
-### Phase 6: Polish & Deploy
+### Phase 6: Polish & Deploy (In Progress)
 - Offline support
 - End-to-end tests
 - Production deployment
@@ -173,6 +173,24 @@ See [redi-assessment-spec.md](redi-assessment-spec.md) for complete specificatio
 
 ## Testing
 
+### Running Tests
+
+**Unit Tests (Vitest)**
+```bash
+cd frontend
+npm test           # Run all tests
+npm test:ui        # Interactive UI
+npm test:coverage  # With coverage
+```
+
+**End-to-End Tests (Playwright)**
+```bash
+cd frontend
+npx playwright install  # First time only
+npm run test:e2e        # Run e2e tests
+npm run test:e2e:ui     # With Playwright UI
+```
+
 ### Sample Data
 
 The seed file includes:
@@ -183,20 +201,17 @@ The seed file includes:
 
 ### Test Credentials
 
-In development mode, any 4-digit PIN will work for the sample assessors.
-
-**Production Note:** Implement proper PIN hashing with bcrypt before deployment.
+Use the PIN hashes from seed.sql. Default test PIN: 1234
 
 ## Security
 
-### Current Implementation (Development)
-- Basic PIN authentication
+### Current Implementation
+- PIN authentication with bcrypt hashing
 - Session tokens in localStorage
 - Row Level Security enabled
-- Any 4-digit PIN accepted
+- Content-Security-Policy header enforcement
 
 ### Production Requirements
-- Implement bcrypt PIN hashing on backend
 - HTTPS required
 - Secure session management
 - Refine RLS policies
@@ -227,5 +242,5 @@ For issues, questions, or contributions, please open an issue on GitHub.
 
 ---
 
-**Project Status:** Phase 1 Complete - Ready for Phase 2
-**Last Updated:** January 25, 2026
+**Project Status:** Phase 4 Complete - 89.7% Overall
+**Last Updated:** January 28, 2026

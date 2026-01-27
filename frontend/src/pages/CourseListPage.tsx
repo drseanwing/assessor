@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
@@ -20,11 +20,7 @@ export default function CourseListPage() {
     new Date().toISOString().split('T')[0]
   )
 
-  useEffect(() => {
-    loadCourses()
-  }, [selectedDate])
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -63,7 +59,11 @@ export default function CourseListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDate])
+
+  useEffect(() => {
+    loadCourses()
+  }, [loadCourses])
 
   const handleLogout = () => {
     logout()
