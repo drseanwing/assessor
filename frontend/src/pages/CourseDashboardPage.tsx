@@ -62,8 +62,191 @@ export default function CourseDashboardPage() {
     participants.map(p => p.participant_id),
     [participants]
   )
+  
+  // Load assessment data function wrapped in useCallback
+  const loadAssessmentData = useCallback(async () => {
+    if (participants.length === 0 || components.length === 0) return
 
-  const loadCourseData = useCallback(async () => {
+    try {
+      // Step 1: Get all participant IDs
+      const pIds = participants.map(p => p.participant_id)
+
+      // Step 2: Batch fetch all assessments and overall assessments in parallel
+      const [assessmentsResult, overallResult] = await Promise.all([
+        supabase
+          .from('component_assessments')
+          .select('*, assessors(name)')
+          .in('participant_id', pIds),
+        supabase
+          .from('overall_assessments')
+          .select('*')
+          .in('participant_id', pIds),
+      ])
+
+      const allAssessments = assessmentsResult.data || []
+      const allOverallAssessments = overallResult.data || []
+
+      // Step 3: Get all assessment IDs and batch fetch all scores
+      const assessmentIds = allAssessments.map(a => a.assessment_id)
+      let allScores: Array<{ assessment_id: string; outcome_id: string; bondy_score?: string; binary_score?: boolean }> = []
+
+      if (assessmentIds.length > 0) {
+        const { data: scoresData } = await supabase
+          .from('outcome_scores')
+          .select('*')
+          .in('assessment_id', assessmentIds)
+        allScores = scoresData || []
+      }
+
+      // Step 4: Organize data in memory using Maps for efficient lookups
+      // Map: participant_id -> assessments[]
+      const assessmentsByParticipant = new Map<string, typeof allAssessments>()
+      for (const assessment of allAssessments) {
+        const existing = assessmentsByParticipant.get(assessment.participant_id) || []
+        existing.push(assessment)
+        assessmentsByParticipant.set(assessment.participant_id, existing)
+      }
+
+      // Map: participant_id -> overall assessment
+      const overallByParticipant = new Map<string, typeof allOverallAssessments[0]>()
+      for (const overall of allOverallAssessments) {
+        overallByParticipant.set(overall.participant_id, overall)
+      }
+
+      // Map: assessment_id -> scores[]
+      const scoresByAssessment = new Map<string, typeof allScores>()
+      for (const score of allScores) {
+        const existing = scoresByAssessment.get(score.assessment_id) || []
+        existing.push(score)
+        scoresByAssessment.set(score.assessment_id, existing)
+      }
+
+      // Step 5: Process data in memory
+      const assessmentResults: ParticipantAssessmentData[] = []
+      const feedbackItems: ComponentFeedback[] = []
+
+      for (const participant of participants) {
+        const assessments = assessmentsByParticipant.get(participant.participant_id) || []
+        const overall = overallByParticipant.get(participant.participant_id)
+
+        const componentStatuses: Record<string, ComponentStatus> = {}
+
+        for (const component of components) {
+          const assessment = assessments.find(a => a.component_id === component.component_id)
+          const componentOutcomes = outcomes[component.component_id] || []
+
+          // Count applicable outcomes for this participant's role
+          const applicableOutcomes = componentOutcomes.filter(o => {
+            return o.applies_to === 'BOTH' ||
+                   o.applies_to === participant.assessment_role ||
+                   participant.assessment_role === 'BOTH'
+          })
+
+          const mandatoryOutcomes = applicableOutcomes.filter(o => o.is_mandatory)
+
+          let scoredCount = 0
+          let hasIssues = false
+
+          if (assessment) {
+            // Get scores from the pre-fetched map
+            const scores = scoresByAssessment.get(assessment.assessment_id) || []
+
+            for (const outcome of mandatoryOutcomes) {
+              const score = scores.find(s => s.outcome_id === outcome.outcome_id)
+              if (score?.bondy_score || score?.binary_score) {
+                scoredCount++
+                // Check for issues (marginal or not observed on mandatory)
+                if (score.bondy_score === 'MARGINAL' || score.bondy_score === 'NOT_OBSERVED') {
+                  hasIssues = true
+                }
+              }
+            }
+
+            // Collect feedback
+            if (assessment.component_feedback) {
+              feedbackItems.push({
+                participantName: participant.candidate_name,
+                componentName: component.component_name,
+                feedback: assessment.component_feedback,
+                assessorName: (assessment as { assessors?: { name: string } }).assessors?.name || null,
+                timestamp: assessment.last_modified_at
+              })
+            }
+          }
+
+          let status: ComponentStatus['status'] = 'not_started'
+          if (scoredCount > 0) {
+            if (scoredCount >= mandatoryOutcomes.length) {
+              status = hasIssues ? 'issues' : 'complete'
+            } else {
+              status = 'in_progress'
+            }
+          }
+
+          componentStatuses[component.component_id] = {
+            componentId: component.component_id,
+            status,
+            scoredCount,
+            totalCount: mandatoryOutcomes.length,
+            feedback: assessment?.component_feedback || null,
+            isQuickPassed: assessment?.is_passed_quick || false
+          }
+        }
+
+        // Add overall feedback
+        if (overall?.overall_feedback) {
+          feedbackItems.push({
+            participantName: participant.candidate_name,
+            componentName: 'Overall',
+            feedback: overall.overall_feedback,
+            assessorName: null,
+            timestamp: overall.last_modified_at
+          })
+        }
+
+        assessmentResults.push({
+          participant,
+          componentStatuses,
+          overallFeedback: overall?.overall_feedback || null,
+          engagementScore: overall?.engagement_score || null
+        })
+      }
+
+      setAssessmentData(assessmentResults)
+      setAllFeedback(feedbackItems.sort((a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ))
+
+    } catch (err) {
+      console.error('Error loading assessment data:', err)
+    }
+  }, [participants, components, outcomes])
+
+  // Realtime updates
+  const { connectionStatus } = useRealtime({
+    courseId,
+    participantIds,
+    onAssessmentChange: loadAssessmentData,
+    onScoreChange: loadAssessmentData
+  })
+
+  // Initial data load
+  useEffect(() => {
+    if (courseId) {
+      loadCourseData()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId])
+
+  // Reload assessment data when participants or components change
+  useEffect(() => {
+    if (participants.length > 0 && components.length > 0) {
+      loadAssessmentData()
+    }
+  }, [participants, components, loadAssessmentData])
+  
+  const loadCourseData = async () => {
+>>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
     setLoading(true)
     setError('')
 
@@ -97,18 +280,24 @@ export default function CourseDashboardPage() {
 
       if (componentsError) throw componentsError
       setComponents(componentsData || [])
-
-      // Fetch outcomes for each component
+      
+      // Fetch all outcomes for all components in a single batch query
+      const componentIds = (componentsData || []).map(c => c.component_id)
       const outcomesMap: Record<string, TemplateOutcome[]> = {}
-      for (const component of componentsData || []) {
-        const { data: outcomesData } = await supabase
+
+      if (componentIds.length > 0) {
+        const { data: allOutcomesData } = await supabase
           .from('template_outcomes')
           .select('*')
-          .eq('component_id', component.component_id)
+          .in('component_id', componentIds)
           .order('outcome_order', { ascending: true })
 
-        if (outcomesData) {
-          outcomesMap[component.component_id] = outcomesData
+        // Organize outcomes by component_id in memory
+        for (const outcome of allOutcomesData || []) {
+          if (!outcomesMap[outcome.component_id]) {
+            outcomesMap[outcome.component_id] = []
+          }
+          outcomesMap[outcome.component_id].push(outcome)
         }
       }
       setOutcomes(outcomesMap)
@@ -119,151 +308,8 @@ export default function CourseDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [courseId])
-
-  const loadAssessmentData = useCallback(async () => {
-    if (participants.length === 0 || components.length === 0) return
-    
-    try {
-      const assessmentResults: ParticipantAssessmentData[] = []
-      const feedbackItems: ComponentFeedback[] = []
-      
-      for (const participant of participants) {
-        // Fetch component assessments for this participant
-        const { data: assessments } = await supabase
-          .from('component_assessments')
-          .select('*, assessors(name)')
-          .eq('participant_id', participant.participant_id)
-        
-        // Fetch overall assessment
-        const { data: overall } = await supabase
-          .from('overall_assessments')
-          .select('*')
-          .eq('participant_id', participant.participant_id)
-          .maybeSingle()
-        
-        const componentStatuses: Record<string, ComponentStatus> = {}
-        
-        for (const component of components) {
-          const assessment = assessments?.find(a => a.component_id === component.component_id)
-          const componentOutcomes = outcomes[component.component_id] || []
-          
-          // Count applicable outcomes for this participant's role
-          const applicableOutcomes = componentOutcomes.filter(o => {
-            return o.applies_to === 'BOTH' || 
-                   o.applies_to === participant.assessment_role ||
-                   participant.assessment_role === 'BOTH'
-          })
-          
-          const mandatoryOutcomes = applicableOutcomes.filter(o => o.is_mandatory)
-          
-          let scoredCount = 0
-          let hasIssues = false
-          
-          if (assessment) {
-            // Fetch outcome scores
-            const { data: scores } = await supabase
-              .from('outcome_scores')
-              .select('*')
-              .eq('assessment_id', assessment.assessment_id)
-            
-            for (const outcome of mandatoryOutcomes) {
-              const score = scores?.find(s => s.outcome_id === outcome.outcome_id)
-              if (score?.bondy_score || score?.binary_score) {
-                scoredCount++
-                // Check for issues (marginal or not observed on mandatory)
-                if (score.bondy_score === 'MARGINAL' || score.bondy_score === 'NOT_OBSERVED') {
-                  hasIssues = true
-                }
-              }
-            }
-            
-            // Collect feedback
-            if (assessment.component_feedback) {
-              feedbackItems.push({
-                participantName: participant.candidate_name,
-                componentName: component.component_name,
-                feedback: assessment.component_feedback,
-                assessorName: (assessment as { assessors?: { name: string } }).assessors?.name || null,
-                timestamp: assessment.last_modified_at
-              })
-            }
-          }
-          
-          let status: ComponentStatus['status'] = 'not_started'
-          if (scoredCount > 0) {
-            if (scoredCount >= mandatoryOutcomes.length) {
-              status = hasIssues ? 'issues' : 'complete'
-            } else {
-              status = 'in_progress'
-            }
-          }
-          
-          componentStatuses[component.component_id] = {
-            componentId: component.component_id,
-            status,
-            scoredCount,
-            totalCount: mandatoryOutcomes.length,
-            feedback: assessment?.component_feedback || null,
-            isQuickPassed: assessment?.is_passed_quick || false
-          }
-        }
-        
-        // Add overall feedback
-        if (overall?.overall_feedback) {
-          feedbackItems.push({
-            participantName: participant.candidate_name,
-            componentName: 'Overall',
-            feedback: overall.overall_feedback,
-            assessorName: null,
-            timestamp: overall.last_modified_at
-          })
-        }
-        
-        assessmentResults.push({
-          participant,
-          componentStatuses,
-          overallFeedback: overall?.overall_feedback || null,
-          engagementScore: overall?.engagement_score || null
-        })
-      }
-      
-      setAssessmentData(assessmentResults)
-      setAllFeedback(feedbackItems.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ))
-      
-    } catch (err) {
-      console.error('Error loading assessment data:', err)
-    }
-  }, [participants, components, outcomes])
-
-  // Realtime updates
-  const { connectionStatus } = useRealtime({
-    courseId,
-    participantIds,
-    onAssessmentChange: useCallback(() => {
-      loadAssessmentData()
-    }, [loadAssessmentData]),
-    onScoreChange: useCallback(() => {
-      loadAssessmentData()
-    }, [loadAssessmentData])
-  })
-
-  // Initial data load
-  useEffect(() => {
-    if (courseId) {
-      loadCourseData()
-    }
-  }, [courseId, loadCourseData])
-
-  // Reload assessment data when participants or components change
-  useEffect(() => {
-    if (participants.length > 0 && components.length > 0) {
-      loadAssessmentData()
-    }
-  }, [participants, components, loadAssessmentData])
-
+  }
+  
   const handleParticipantClick = (participantId: string) => {
     navigate(`/course/${courseId}/participant/${participantId}/assess`)
   }
