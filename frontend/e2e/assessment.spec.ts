@@ -446,9 +446,6 @@ test.describe('Assessment Workflow', () => {
         // Sync indicator should be visible (online/offline status)
         const header = page.locator('header')
 
-        // Look for status indicators (dots or icons)
-        const statusIndicators = header.locator('div, span').filter({ hasText: /online|offline|connected/i })
-
         // Either status text is visible or header contains status elements
         expect(await header.isVisible()).toBeTruthy()
       }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
@@ -14,7 +15,7 @@ afterEach(() => {
 if (!globalThis.crypto) {
   globalThis.crypto = {
     subtle: {
-      digest: async (algorithm: string, data: BufferSource) => {
+      digest: async (_algorithm: string, data: BufferSource) => {
         // Simple mock implementation for testing
         const encoder = new TextEncoder()
         const text = new TextDecoder().decode(data)
