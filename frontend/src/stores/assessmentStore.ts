@@ -1,12 +1,13 @@
 import { create } from 'zustand'
-import type { 
-  Participant, 
-  TemplateComponent, 
-  TemplateOutcome, 
+import type {
+  Participant,
+  TemplateComponent,
+  TemplateOutcome,
   BondyScore,
   BinaryScore
 } from '../types/database'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from './authStore'
 
 // Type for local score tracking before save
 interface LocalOutcomeScore {
@@ -357,43 +358,44 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   
   saveChanges: (() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
-    
-    // Helper to get current assessor from localStorage
+    let isSaving = false
+    let pendingSave = false
+
+    // Helper to get current assessor from auth store
     const getCurrentAssessorId = (): string | null => {
-      try {
-        const stored = localStorage.getItem('redi-auth-storage')
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          return parsed.state?.assessor?.assessor_id || null
-        }
-      } catch {
-        // Ignore parse errors
-      }
-      return null
+      return useAuthStore.getState().assessor?.assessor_id || null
     }
-    
+
     return async () => {
       // Debounce saves
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
-      
+
       timeoutId = setTimeout(async () => {
-        const { participant, componentAssessments, overallAssessment } = get()
-        if (!participant) return
-        
-        const assessorId = getCurrentAssessorId()
-        
-        set({ saveStatus: 'saving' })
-        
+        // Prevent overlapping saves with mutex pattern
+        if (isSaving) {
+          pendingSave = true
+          return
+        }
+
+        isSaving = true
+
         try {
+          const { participant, componentAssessments, overallAssessment } = get()
+          if (!participant) return
+
+          const assessorId = getCurrentAssessorId()
+
+          set({ saveStatus: 'saving' })
+
           // Save component assessments
           for (const [componentId, assessment] of Object.entries(componentAssessments)) {
             if (!assessment.isDirty) continue
-            
+
             // Upsert component assessment
             let assessmentId = assessment.assessmentId
-            
+
             if (!assessmentId) {
               // Create new assessment
               const { data, error } = await supabase
@@ -407,10 +409,10 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 })
                 .select()
                 .single()
-              
+
               if (error) throw error
               assessmentId = data.assessment_id
-              
+
               // Update local state with new ID
               set((state) => ({
                 componentAssessments: {
@@ -432,14 +434,14 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   last_modified_at: new Date().toISOString()
                 })
                 .eq('assessment_id', assessmentId)
-              
+
               if (error) throw error
             }
-            
+
             // Save outcome scores
             for (const [outcomeId, score] of Object.entries(assessment.scores)) {
               if (!score.isDirty) continue
-              
+
               const { error } = await supabase
                 .from('outcome_scores')
                 .upsert({
@@ -452,10 +454,10 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 }, {
                   onConflict: 'assessment_id,outcome_id'
                 })
-              
+
               if (error) throw error
             }
-            
+
             // Mark as clean
             set((state) => ({
               componentAssessments: {
@@ -472,7 +474,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
               }
             }))
           }
-          
+
           // Save overall assessment if dirty
           if (overallAssessment.isDirty) {
             if (!overallAssessment.overallId) {
@@ -486,9 +488,9 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 })
                 .select()
                 .single()
-              
+
               if (error) throw error
-              
+
               set((state) => ({
                 overallAssessment: {
                   ...state.overallAssessment,
@@ -506,9 +508,9 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   last_modified_at: new Date().toISOString()
                 })
                 .eq('overall_id', overallAssessment.overallId)
-              
+
               if (error) throw error
-              
+
               set((state) => ({
                 overallAssessment: {
                   ...state.overallAssessment,
@@ -517,17 +519,23 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
               }))
             }
           }
-          
+
           set({ saveStatus: 'saved', lastSaved: new Date() })
-          
+
           // Reset status after delay
           setTimeout(() => {
             set({ saveStatus: 'idle' })
           }, 2000)
-          
+
         } catch (error) {
           console.error('Error saving assessments:', error)
           set({ saveStatus: 'error' })
+        } finally {
+          isSaving = false
+          if (pendingSave) {
+            pendingSave = false
+            get().saveChanges()
+          }
         }
       }, 1000) // 1 second debounce
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
@@ -16,29 +16,7 @@ export default function ParticipantListPage() {
   const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
 
-  useEffect(() => {
-    if (courseId) {
-      loadCourseData()
-    }
-  }, [courseId])
-
-  useEffect(() => {
-    // Filter participants based on search term
-    if (searchTerm.trim() === '') {
-      setFilteredParticipants(participants)
-    } else {
-      const term = searchTerm.toLowerCase()
-      const filtered = participants.filter(p => 
-        p.candidate_name.toLowerCase().includes(term) ||
-        p.payroll_number?.toLowerCase().includes(term) ||
-        p.designation?.toLowerCase().includes(term) ||
-        p.work_area?.toLowerCase().includes(term)
-      )
-      setFilteredParticipants(filtered)
-    }
-  }, [searchTerm, participants])
-
-  const loadCourseData = async () => {
+  const loadCourseData = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -69,7 +47,29 @@ export default function ParticipantListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [courseId])
+
+  useEffect(() => {
+    if (courseId) {
+      loadCourseData()
+    }
+  }, [courseId, loadCourseData])
+
+  useEffect(() => {
+    // Filter participants based on search term
+    if (searchTerm.trim() === '') {
+      setFilteredParticipants(participants)
+    } else {
+      const term = searchTerm.toLowerCase()
+      const filtered = participants.filter(p =>
+        p.candidate_name.toLowerCase().includes(term) ||
+        p.payroll_number?.toLowerCase().includes(term) ||
+        p.designation?.toLowerCase().includes(term) ||
+        p.work_area?.toLowerCase().includes(term)
+      )
+      setFilteredParticipants(filtered)
+    }
+  }, [searchTerm, participants])
 
   const handleParticipantClick = (participantId: string) => {
     navigate(`/course/${courseId}/participant/${participantId}/assess`)
