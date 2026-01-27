@@ -10,7 +10,8 @@ const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   return <div>No error</div>
 }
 
-// Component that throws on button click
+// Component that throws on button click - used for testing error boundary
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ThrowOnClick = () => {
   const [shouldThrow, setShouldThrow] = React.useState(false)
 

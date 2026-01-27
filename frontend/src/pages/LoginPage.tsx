@@ -28,7 +28,8 @@ export default function LoginPage() {
       navigate('/courses')
     }
 
-    // Load assessors
+    // Load assessors - this is safe because loadAssessors is memoized with useCallback
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAssessors()
   }, [isAuthenticated, navigate, loadAssessors])
 

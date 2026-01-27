@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { hashPin, loginWithPin, fetchActiveAssessors } from '../auth'
 import { supabase } from '../supabase'

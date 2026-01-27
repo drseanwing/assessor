@@ -38,33 +38,6 @@ export function useOfflineSync(): UseOfflineSyncReturn {
   const [syncError, setSyncError] = useState<string | null>(null)
   const syncInProgress = useRef(false)
 
-  // Initialize IndexedDB on mount
-  useEffect(() => {
-    initDB().catch(console.error)
-    updatePendingCount()
-  }, [updatePendingCount])
-
-  // Listen for online/offline events
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      // Auto-sync when coming back online
-      syncPendingChanges()
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [syncPendingChanges])
-
   const updatePendingCount = useCallback(async () => {
     try {
       const count = await getPendingChangeCount()
@@ -116,6 +89,33 @@ export function useOfflineSync(): UseOfflineSyncReturn {
       syncInProgress.current = false
     }
   }, [updatePendingCount])
+
+  // Initialize IndexedDB on mount
+  useEffect(() => {
+    initDB().catch(console.error)
+    updatePendingCount()
+  }, [updatePendingCount])
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      // Auto-sync when coming back online
+      syncPendingChanges()
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [syncPendingChanges])
 
   const processChange = async (change: PendingChange): Promise<void> => {
     const { type, action, data } = change
