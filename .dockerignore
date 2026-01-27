@@ -1,0 +1,14 @@
+node_modules
+frontend/node_modules
+dist
+frontend/dist
+.git
+*.md
+.env*
+**/*.test.*
+Dockerfile*
+.github
+.vscode
+.idea
+*.log
+coverage

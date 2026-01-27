@@ -29,8 +29,19 @@ export default function LoginPage() {
     }
 
     // Load assessors
+    const loadAssessors = async () => {
+      const data = await fetchActiveAssessors()
+      setAssessors(data)
+      if (data.length > 0) {
+        setSelectedAssessor(data[0].assessor_id)
+      }
+    }
     loadAssessors()
+<<<<<<< HEAD
   }, [isAuthenticated, navigate, loadAssessors])
+=======
+  }, [isAuthenticated, navigate])
+>>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
 
   const handlePinChange = (value: string) => {
     // Only allow digits and max 4 characters

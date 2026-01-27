@@ -38,6 +38,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
   const [syncError, setSyncError] = useState<string | null>(null)
   const syncInProgress = useRef(false)
 
+<<<<<<< HEAD
   // Initialize IndexedDB on mount
   useEffect(() => {
     initDB().catch(console.error)
@@ -65,6 +66,8 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     }
   }, [syncPendingChanges])
 
+=======
+>>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
   const updatePendingCount = useCallback(async () => {
     try {
       const count = await getPendingChangeCount()
@@ -90,7 +93,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
 
     try {
       const changes = await getPendingChanges()
-      
+
       for (const change of changes) {
         if (change.retryCount >= MAX_RETRIES) {
           console.warn(`Change ${change.id} exceeded max retries, skipping`)
@@ -116,6 +119,33 @@ export function useOfflineSync(): UseOfflineSyncReturn {
       syncInProgress.current = false
     }
   }, [updatePendingCount])
+
+  // Initialize IndexedDB on mount
+  useEffect(() => {
+    initDB().catch(console.error)
+    updatePendingCount()
+  }, [updatePendingCount])
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      // Auto-sync when coming back online
+      syncPendingChanges()
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [syncPendingChanges])
 
   const processChange = async (change: PendingChange): Promise<void> => {
     const { type, action, data } = change
