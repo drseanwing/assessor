@@ -21,16 +21,15 @@ export default function LoginPage() {
     }
 
     // Load assessors
+    const loadAssessors = async () => {
+      const data = await fetchActiveAssessors()
+      setAssessors(data)
+      if (data.length > 0) {
+        setSelectedAssessor(data[0].assessor_id)
+      }
+    }
     loadAssessors()
   }, [isAuthenticated, navigate])
-
-  const loadAssessors = async () => {
-    const data = await fetchActiveAssessors()
-    setAssessors(data)
-    if (data.length > 0) {
-      setSelectedAssessor(data[0].assessor_id)
-    }
-  }
 
   const handlePinChange = (value: string) => {
     // Only allow digits and max 4 characters

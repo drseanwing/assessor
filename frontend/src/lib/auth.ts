@@ -42,12 +42,7 @@ export async function loginWithPin(credentials: LoginCredentials): Promise<Login
       }
     }
 
-    // Hash the provided PIN and compare
-    // In production, this comparison should happen on the backend
-    // const hashedPin = await hashPin(credentials.pin)
-    // In production: if (hashedPin !== assessor.pin_hash) { return error }
-    
-    // For development/demo, we'll accept any 4-digit PIN
+    // Validate PIN format first
     if (credentials.pin.length !== 4 || !/^\d{4}$/.test(credentials.pin)) {
       return {
         success: false,
@@ -55,9 +50,24 @@ export async function loginWithPin(credentials: LoginCredentials): Promise<Login
       }
     }
 
+    // Hash the provided PIN and compare against stored hash
+    // NOTE: In production, this comparison should happen server-side to prevent
+    // timing attacks and ensure the hash is never exposed to the client
+    const hashedPin = await hashPin(credentials.pin)
+    if (hashedPin !== assessor.pin_hash) {
+      return {
+        success: false,
+        error: 'Invalid PIN'
+      }
+    }
+
+    // Remove pin_hash from the returned assessor object
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { pin_hash: _pinHash, ...safeAssessor } = assessor
+
     return {
       success: true,
-      assessor: assessor as Assessor
+      assessor: safeAssessor as Assessor
     }
   } catch (error) {
     console.error('Login error:', error)
@@ -72,7 +82,7 @@ export async function fetchActiveAssessors(): Promise<Assessor[]> {
   try {
     const { data, error } = await supabase
       .from('assessors')
-      .select('*')
+      .select('assessor_id, name, email, is_active')
       .eq('is_active', true)
       .order('name', { ascending: true })
 
