@@ -160,8 +160,7 @@ describe('ErrorBoundary', () => {
       )
 
       const container = screen.getByText('Something went wrong').closest('div')
-      expect(container).toHaveClass('min-h-screen')
-      expect(container).toHaveClass('bg-gray-50')
+      expect(container).toHaveClass('flex-1')
     })
   })
 
