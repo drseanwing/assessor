@@ -150,13 +150,9 @@ export function useRealtime({
       }
     })
 
-    channel.on('presence', { event: 'join' }, ({ newPresences: _newPresences }) => {
-      // Presence join events are handled by sync callback
-    })
-
-    channel.on('presence', { event: 'leave' }, ({ leftPresences: _leftPresences }) => {
-      // Presence leave events are handled by sync callback
-    })
+    // Presence join/leave events are handled by the sync callback above
+    channel.on('presence', { event: 'join' }, () => {})
+    channel.on('presence', { event: 'leave' }, () => {})
 
     // Subscribe and track status - use queueMicrotask to avoid sync setState in effect
     queueMicrotask(() => setConnectionStatus('connecting'))
