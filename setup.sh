@@ -241,7 +241,9 @@ Environment Variables:
   DB_USER             Database user
   DB_HOST             Database host
   DB_PORT             Database port
-  PGPASSWORD          PostgreSQL password (avoid using in production)
+  PGPASSWORD          PostgreSQL password (⚠️ SECURITY WARNING: Use only for
+                      local development. In production, use .pgpass or other
+                      secure credential management.)
   SUPABASE_URL        Supabase project URL
   SUPABASE_KEY        Supabase anon key
 
@@ -389,14 +391,21 @@ confirm() {
 }
 
 # Prompt for input with default value
+# Uses indirect variable assignment to avoid eval security risks
 prompt_input() {
     local message="$1"
     local default="$2"
     local var_name="$3"
     
+    # Validate var_name contains only valid variable characters
+    if [[ ! "$var_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+        log_error "Invalid variable name in prompt_input: $var_name"
+        return 1
+    fi
+    
     if [[ "$AUTO_CONFIRM" == true ]]; then
         log_debug "Auto-using default for $var_name: $default"
-        eval "$var_name=\"$default\""
+        printf -v "$var_name" '%s' "$default"
         return
     fi
     
@@ -404,9 +413,9 @@ prompt_input() {
     read -r response
     
     if [[ -z "$response" ]]; then
-        eval "$var_name=\"$default\""
+        printf -v "$var_name" '%s' "$default"
     else
-        eval "$var_name=\"$response\""
+        printf -v "$var_name" '%s' "$response"
     fi
 }
 
@@ -613,9 +622,50 @@ show_install_instructions() {
 # Database Setup Functions
 # ============================================================================
 
+# Validate database configuration values to prevent injection
+validate_db_config() {
+    log_debug "Validating database configuration..."
+    
+    # Validate DB_NAME (alphanumeric, underscores, hyphens only)
+    if [[ ! "$DB_NAME" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+        log_error "Invalid database name: $DB_NAME"
+        log_info "Database name must start with a letter and contain only alphanumeric characters, underscores, and hyphens"
+        return 1
+    fi
+    
+    # Validate DB_USER (alphanumeric, underscores only)
+    if [[ ! "$DB_USER" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
+        log_error "Invalid database user: $DB_USER"
+        log_info "Database user must start with a letter and contain only alphanumeric characters and underscores"
+        return 1
+    fi
+    
+    # Validate DB_HOST (hostname or IP, no special chars that could be injection)
+    if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        log_error "Invalid database host: $DB_HOST"
+        log_info "Database host must contain only alphanumeric characters, dots, underscores, and hyphens"
+        return 1
+    fi
+    
+    # Validate DB_PORT (numeric only)
+    if [[ ! "$DB_PORT" =~ ^[0-9]+$ ]]; then
+        log_error "Invalid database port: $DB_PORT"
+        log_info "Database port must be a number"
+        return 1
+    fi
+    
+    log_debug "Database configuration validation passed"
+    return 0
+}
+
 # Create PostgreSQL database
 create_database() {
     log_info "Creating database '$DB_NAME'..."
+    
+    # Validate configuration before use
+    if ! validate_db_config; then
+        return 1
+    fi
     
     # Check if database already exists
     if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
@@ -647,25 +697,41 @@ create_database() {
 run_migrations() {
     log_info "Running database migrations..."
     
-    local migration_file="${SUPABASE_DIR}/migrations/20260125_initial_schema.sql"
+    # Find migration files dynamically (in case file names change)
+    local migration_dir="${SUPABASE_DIR}/migrations"
+    local migration_file
     
-    if [[ ! -f "$migration_file" ]]; then
-        log_error "Migration file not found: $migration_file"
+    if [[ ! -d "$migration_dir" ]]; then
+        log_error "Migrations directory not found: $migration_dir"
         return 1
     fi
     
-    log_debug "Running migration: $migration_file"
+    # Find SQL files in migrations directory, sorted alphabetically
+    local migration_files
+    mapfile -t migration_files < <(find "$migration_dir" -maxdepth 1 -name "*.sql" -type f | sort)
     
-    # Run the migration
-    if ! psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration_file" 2>&1 | tee -a "$LOG_FILE"; then
-        # Check for actual errors vs warnings
-        if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\dt' 2>/dev/null | grep -q 'assessors'; then
-            log_warn "Migration completed with warnings (schema already exists)"
-        else
-            log_error "Failed to run database migrations"
-            return 1
-        fi
+    if [[ ${#migration_files[@]} -eq 0 ]]; then
+        log_error "No migration files found in: $migration_dir"
+        return 1
     fi
+    
+    log_info "Found ${#migration_files[@]} migration file(s)"
+    
+    # Run each migration file
+    for migration_file in "${migration_files[@]}"; do
+        log_debug "Running migration: $migration_file"
+        
+        # Run the migration
+        if ! psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration_file" 2>&1 | tee -a "$LOG_FILE"; then
+            # Check for actual errors vs warnings
+            if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\dt' 2>/dev/null | grep -q 'assessors'; then
+                log_warn "Migration completed with warnings (schema already exists)"
+            else
+                log_error "Failed to run database migration: $(basename "$migration_file")"
+                return 1
+            fi
+        fi
+    done
     
     log_success "Database migrations completed"
     return 0
@@ -747,6 +813,7 @@ setup_database() {
     if [[ -n "$SUPABASE_URL" ]]; then
         log_info "Using Supabase cloud database"
         log_info "URL: $SUPABASE_URL"
+        log_debug "Supabase key configured: ${SUPABASE_KEY:+yes}" # Mask key in logs
         log_info "Skipping local database setup"
         log_warn "Make sure to run migrations in Supabase SQL editor or via CLI"
         return 0
@@ -798,10 +865,13 @@ install_frontend_deps() {
     
     cd "$FRONTEND_DIR" || exit_error "Cannot access frontend directory" 4
     
-    if [[ -f "node_modules/.package-lock.json" ]]; then
+    # Check for node_modules directory (more reliable than .package-lock.json)
+    if [[ -d "node_modules" ]]; then
         log_info "node_modules exists, checking if update needed..."
         
-        if npm ls --depth=0 &>/dev/null; then
+        local npm_check_result
+        if npm_check_result=$(npm ls --depth=0 2>&1); then
+            log_debug "npm ls check passed"
             log_success "Dependencies are already installed and up to date"
             
             if confirm "Reinstall dependencies anyway?" "n"; then
@@ -810,6 +880,9 @@ install_frontend_deps() {
             else
                 return 0
             fi
+        else
+            log_debug "npm ls check failed: $npm_check_result"
+            log_info "Dependencies need updating"
         fi
     fi
     
@@ -874,8 +947,8 @@ configure_frontend_env() {
 VITE_SUPABASE_URL=${supabase_url_value}
 VITE_SUPABASE_ANON_KEY=${supabase_key_value}
 
-# Optional: For self-hosted PostgreSQL
-# VITE_DATABASE_URL=postgresql://${DB_USER}:password@${DB_HOST}:${DB_PORT}/${DB_NAME}
+# Optional: For self-hosted PostgreSQL (template - replace with your credentials)
+# VITE_DATABASE_URL=postgresql://user:password@localhost:5432/database_name
 
 # SharePoint Integration (Optional - Phase 5)
 # VITE_AZURE_CLIENT_ID=your_azure_client_id
@@ -883,6 +956,10 @@ VITE_SUPABASE_ANON_KEY=${supabase_key_value}
 # VITE_SHAREPOINT_SITE_ID=your_sharepoint_site_id
 # VITE_SHAREPOINT_LIST_ID=your_sharepoint_list_id
 EOF
+    
+    # Set restrictive permissions on .env file (contains sensitive credentials)
+    chmod 600 "$ENV_FILE"
+    log_debug "Set permissions 600 on $ENV_FILE"
     
     log_success "Environment file created: $ENV_FILE"
     
@@ -903,7 +980,9 @@ verify_frontend_build() {
     # Run TypeScript type check
     log_info "Running TypeScript type check..."
     if ! npx tsc --noEmit 2>&1 | tee -a "$LOG_FILE"; then
-        log_warn "TypeScript type check has errors (may be expected without database connection)"
+        log_warn "TypeScript type check has errors"
+        log_info "This may be expected if Supabase credentials are not configured"
+        log_info "Review errors above and update .env file if needed"
     else
         log_success "TypeScript type check passed"
     fi
