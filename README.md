@@ -29,7 +29,38 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 - PostgreSQL 14+ (or Supabase account)
 - npm or yarn
 
-### Database Setup
+### Automated Setup (Recommended)
+
+The easiest way to set up the application is using the automated setup script:
+
+```bash
+# Make the script executable
+chmod +x setup.sh
+
+# Run interactive setup
+./setup.sh
+
+# Or run unattended setup with Supabase
+./setup.sh --yes --skip-db --supabase-url 'YOUR_SUPABASE_URL' --supabase-key 'YOUR_SUPABASE_KEY'
+
+# Or run unattended setup with local PostgreSQL
+./setup.sh --yes --db-name redi_assessment --db-user postgres
+```
+
+The setup script will:
+- ✅ Check for required dependencies (Node.js, npm, PostgreSQL)
+- ✅ Install frontend dependencies
+- ✅ Configure the database (create, migrate, seed)
+- ✅ Set up environment variables
+- ✅ Verify the build
+
+Run `./setup.sh --help` for all available options.
+
+### Manual Setup
+
+If you prefer manual setup, follow these steps:
+
+#### Database Setup
 
 1. **Option A: Using Supabase** (Recommended)
    ```bash
@@ -46,7 +77,7 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
 See [supabase/README.md](supabase/README.md) for detailed database setup instructions.
 
-### Frontend Setup
+#### Frontend Setup
 
 ```bash
 cd frontend

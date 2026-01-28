@@ -1,0 +1,16 @@
+# Logs
+*.log
+setup.log
+
+# Node
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Build
+dist/
