@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { loginWithPin, fetchActiveAssessors } from '../lib/auth'
@@ -28,20 +28,10 @@ export default function LoginPage() {
       navigate('/courses')
     }
 
-    // Load assessors
-    const loadAssessors = async () => {
-      const data = await fetchActiveAssessors()
-      setAssessors(data)
-      if (data.length > 0) {
-        setSelectedAssessor(data[0].assessor_id)
-      }
-    }
+    // Load assessors - this is safe because loadAssessors is memoized with useCallback
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAssessors()
-<<<<<<< HEAD
   }, [isAuthenticated, navigate, loadAssessors])
-=======
-  }, [isAuthenticated, navigate])
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
 
   const handlePinChange = (value: string) => {
     // Only allow digits and max 4 characters
@@ -50,7 +40,7 @@ export default function LoginPage() {
     setError('')
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     
     if (!selectedAssessor) {

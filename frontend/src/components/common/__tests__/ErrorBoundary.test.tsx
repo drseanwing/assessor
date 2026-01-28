@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import React, { useState } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import ErrorBoundary from '../ErrorBoundary'
 
@@ -10,9 +11,10 @@ const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   return <div>No error</div>
 }
 
-// Component that throws on button click
+// Component that throws on button click - used for testing error boundary
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ThrowOnClick = () => {
-  const [shouldThrow, setShouldThrow] = React.useState(false)
+  const [shouldThrow, setShouldThrow] = useState(false)
 
   if (shouldThrow) {
     throw new Error('Click error')
@@ -20,9 +22,6 @@ const ThrowOnClick = () => {
 
   return <button onClick={() => setShouldThrow(true)}>Throw Error</button>
 }
-
-// Need to import React for the component above
-import React from 'react'
 
 describe('ErrorBoundary', () => {
   beforeEach(() => {
@@ -159,8 +158,7 @@ describe('ErrorBoundary', () => {
       )
 
       const container = screen.getByText('Something went wrong').closest('div')
-      expect(container).toHaveClass('min-h-screen')
-      expect(container).toHaveClass('bg-gray-50')
+      expect(container).toHaveClass('flex-1')
     })
   })
 

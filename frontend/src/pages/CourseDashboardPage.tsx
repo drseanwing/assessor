@@ -62,10 +62,6 @@ export default function CourseDashboardPage() {
     participants.map(p => p.participant_id),
     [participants]
   )
-<<<<<<< HEAD
-
-  const loadCourseData = useCallback(async () => {
-=======
   
   // Load assessment data function wrapped in useCallback
   const loadAssessmentData = useCallback(async () => {
@@ -250,7 +246,6 @@ export default function CourseDashboardPage() {
   }, [participants, components, loadAssessmentData])
   
   const loadCourseData = async () => {
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
     setLoading(true)
     setError('')
 
@@ -284,14 +279,9 @@ export default function CourseDashboardPage() {
 
       if (componentsError) throw componentsError
       setComponents(componentsData || [])
-<<<<<<< HEAD
-
-      // Fetch outcomes for each component
-=======
       
       // Fetch all outcomes for all components in a single batch query
       const componentIds = (componentsData || []).map(c => c.component_id)
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
       const outcomesMap: Record<string, TemplateOutcome[]> = {}
 
       if (componentIds.length > 0) {
@@ -301,17 +291,12 @@ export default function CourseDashboardPage() {
           .in('component_id', componentIds)
           .order('outcome_order', { ascending: true })
 
-<<<<<<< HEAD
-        if (outcomesData) {
-          outcomesMap[component.component_id] = outcomesData
-=======
         // Organize outcomes by component_id in memory
         for (const outcome of allOutcomesData || []) {
           if (!outcomesMap[outcome.component_id]) {
             outcomesMap[outcome.component_id] = []
           }
           outcomesMap[outcome.component_id].push(outcome)
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
         }
       }
       setOutcomes(outcomesMap)
@@ -322,158 +307,9 @@ export default function CourseDashboardPage() {
     } finally {
       setLoading(false)
     }
-<<<<<<< HEAD
-  }, [courseId])
-
-  const loadAssessmentData = useCallback(async () => {
-    if (participants.length === 0 || components.length === 0) return
-    
-    try {
-      const assessmentResults: ParticipantAssessmentData[] = []
-      const feedbackItems: ComponentFeedback[] = []
-      
-      for (const participant of participants) {
-        // Fetch component assessments for this participant
-        const { data: assessments } = await supabase
-          .from('component_assessments')
-          .select('*, assessors(name)')
-          .eq('participant_id', participant.participant_id)
-        
-        // Fetch overall assessment
-        const { data: overall } = await supabase
-          .from('overall_assessments')
-          .select('*')
-          .eq('participant_id', participant.participant_id)
-          .maybeSingle()
-        
-        const componentStatuses: Record<string, ComponentStatus> = {}
-        
-        for (const component of components) {
-          const assessment = assessments?.find(a => a.component_id === component.component_id)
-          const componentOutcomes = outcomes[component.component_id] || []
-          
-          // Count applicable outcomes for this participant's role
-          const applicableOutcomes = componentOutcomes.filter(o => {
-            return o.applies_to === 'BOTH' || 
-                   o.applies_to === participant.assessment_role ||
-                   participant.assessment_role === 'BOTH'
-          })
-          
-          const mandatoryOutcomes = applicableOutcomes.filter(o => o.is_mandatory)
-          
-          let scoredCount = 0
-          let hasIssues = false
-          
-          if (assessment) {
-            // Fetch outcome scores
-            const { data: scores } = await supabase
-              .from('outcome_scores')
-              .select('*')
-              .eq('assessment_id', assessment.assessment_id)
-            
-            for (const outcome of mandatoryOutcomes) {
-              const score = scores?.find(s => s.outcome_id === outcome.outcome_id)
-              if (score?.bondy_score || score?.binary_score) {
-                scoredCount++
-                // Check for issues (marginal or not observed on mandatory)
-                if (score.bondy_score === 'MARGINAL' || score.bondy_score === 'NOT_OBSERVED') {
-                  hasIssues = true
-                }
-              }
-            }
-            
-            // Collect feedback
-            if (assessment.component_feedback) {
-              feedbackItems.push({
-                participantName: participant.candidate_name,
-                componentName: component.component_name,
-                feedback: assessment.component_feedback,
-                assessorName: (assessment as { assessors?: { name: string } }).assessors?.name || null,
-                timestamp: assessment.last_modified_at
-              })
-            }
-          }
-          
-          let status: ComponentStatus['status'] = 'not_started'
-          if (scoredCount > 0) {
-            if (scoredCount >= mandatoryOutcomes.length) {
-              status = hasIssues ? 'issues' : 'complete'
-            } else {
-              status = 'in_progress'
-            }
-          }
-          
-          componentStatuses[component.component_id] = {
-            componentId: component.component_id,
-            status,
-            scoredCount,
-            totalCount: mandatoryOutcomes.length,
-            feedback: assessment?.component_feedback || null,
-            isQuickPassed: assessment?.is_passed_quick || false
-          }
-        }
-        
-        // Add overall feedback
-        if (overall?.overall_feedback) {
-          feedbackItems.push({
-            participantName: participant.candidate_name,
-            componentName: 'Overall',
-            feedback: overall.overall_feedback,
-            assessorName: null,
-            timestamp: overall.last_modified_at
-          })
-        }
-        
-        assessmentResults.push({
-          participant,
-          componentStatuses,
-          overallFeedback: overall?.overall_feedback || null,
-          engagementScore: overall?.engagement_score || null
-        })
-      }
-      
-      setAssessmentData(assessmentResults)
-      setAllFeedback(feedbackItems.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ))
-      
-    } catch (err) {
-      console.error('Error loading assessment data:', err)
-    }
-  }, [participants, components, outcomes])
-
-  // Realtime updates
-  const { connectionStatus } = useRealtime({
-    courseId,
-    participantIds,
-    onAssessmentChange: useCallback(() => {
-      loadAssessmentData()
-    }, [loadAssessmentData]),
-    onScoreChange: useCallback(() => {
-      loadAssessmentData()
-    }, [loadAssessmentData])
-  })
-
-  // Initial data load
-  useEffect(() => {
-    if (courseId) {
-      loadCourseData()
-    }
-  }, [courseId, loadCourseData])
-
-  // Reload assessment data when participants or components change
-  useEffect(() => {
-    if (participants.length > 0 && components.length > 0) {
-      loadAssessmentData()
-    }
-  }, [participants, components, loadAssessmentData])
-
-  const handleParticipantClick = (participantId: string) => {
-=======
   }
   
-const handleParticipantClick = (participantId: string) => {
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
+  const handleParticipantClick = (participantId: string) => {
     navigate(`/course/${courseId}/participant/${participantId}/assess`)
   }
   

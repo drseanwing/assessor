@@ -1,6 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { hashPin, loginWithPin, fetchActiveAssessors } from '../auth'
-import { supabase } from '../supabase'
 import type { Assessor } from '../../types/database'
 
 // Mock supabase
@@ -9,6 +8,10 @@ vi.mock('../supabase', () => ({
     from: vi.fn()
   }
 }))
+
+// Import after mocks are set up
+import { hashPin, loginWithPin, fetchActiveAssessors } from '../auth'
+import { supabase } from '../supabase'
 
 describe('auth.ts', () => {
   describe('hashPin', () => {
@@ -76,15 +79,20 @@ describe('auth.ts', () => {
         pin: '1234'
       }
 
-      // Mock hashPin to return the expected hash
-      const hashedPin = 'mockedhash123'
-      vi.spyOn(require('../auth'), 'hashPin').mockResolvedValue(hashedPin)
+      // Calculate the actual hash for the PIN
+      const hashedPin = await hashPin('1234')
+      
+      // Create mock assessor with the correct hash
+      const mockAssessorWithCorrectHash = {
+        ...mockAssessor,
+        pin_hash: hashedPin
+      }
 
       // Mock supabase query
       const mockSelect = vi.fn().mockReturnThis()
       const mockEq = vi.fn().mockReturnThis()
       const mockSingle = vi.fn().mockResolvedValue({
-        data: mockAssessor,
+        data: mockAssessorWithCorrectHash,
         error: null
       })
 
@@ -107,7 +115,7 @@ describe('auth.ts', () => {
       const result = await loginWithPin(credentials)
 
       expect(result.success).toBe(true)
-      expect(result.assessor).toEqual(mockAssessor)
+      expect(result.assessor).toEqual(mockAssessorWithCorrectHash)
       expect(result.error).toBeUndefined()
       expect(supabase.from).toHaveBeenCalledWith('assessors')
     })
@@ -154,9 +162,7 @@ describe('auth.ts', () => {
         pin: 'wrong'
       }
 
-      // Mock hashPin to return a different hash
-      const hashedPin = 'differenthash456'
-      vi.spyOn(require('../auth'), 'hashPin').mockResolvedValue(hashedPin)
+      // Use a different hash in the mock assessor
 
       const mockSelect = vi.fn().mockReturnThis()
       const mockEq = vi.fn().mockReturnThis()
@@ -194,6 +200,9 @@ describe('auth.ts', () => {
         pin: '1234'
       }
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const mockSelect = vi.fn().mockImplementation(() => {
         throw new Error('Database connection failed')
       })
@@ -207,6 +216,8 @@ describe('auth.ts', () => {
       expect(result.success).toBe(false)
       expect(result.error).toBe('Login failed. Please try again.')
       expect(result.assessor).toBeUndefined()
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should verify assessor is active', async () => {
@@ -303,6 +314,9 @@ describe('auth.ts', () => {
     })
 
     it('should return empty array on error', async () => {
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const mockSelect = vi.fn().mockReturnThis()
       const mockEq = vi.fn().mockReturnThis()
       const mockOrder = vi.fn().mockResolvedValue({
@@ -328,9 +342,14 @@ describe('auth.ts', () => {
       const result = await fetchActiveAssessors()
 
       expect(result).toEqual([])
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle exceptions and return empty array', async () => {
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const mockSelect = vi.fn().mockImplementation(() => {
         throw new Error('Network error')
       })
@@ -342,6 +361,8 @@ describe('auth.ts', () => {
       const result = await fetchActiveAssessors()
 
       expect(result).toEqual([])
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should order assessors by name ascending', async () => {
