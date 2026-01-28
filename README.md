@@ -23,7 +23,32 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended)
+
+The fastest way to get started is using Docker Compose:
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Start all services (PostgreSQL, API, Frontend, etc.)
+docker compose up -d
+
+# Check service health
+docker compose ps
+
+# View logs
+docker compose logs -f
+```
+
+The application will be available at:
+- **Frontend**: http://localhost:7385
+- **Database UI**: http://localhost:7389
+- **API Gateway**: http://localhost:7387
+
+See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
+
+### Option 2: Prerequisites for Manual Setup
 
 - Node.js 20+
 - PostgreSQL 14+ (or Supabase account)
