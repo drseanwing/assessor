@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import ErrorBoundary from '../ErrorBoundary'
 
@@ -21,9 +22,6 @@ const ThrowOnClick = () => {
 
   return <button onClick={() => setShouldThrow(true)}>Throw Error</button>
 }
-
-// Need to import React for the component above
-import React from 'react'
 
 describe('ErrorBoundary', () => {
   beforeEach(() => {

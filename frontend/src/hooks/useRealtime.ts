@@ -151,11 +151,9 @@ export function useRealtime({
     })
 
     channel.on('presence', { event: 'join' }, ({ newPresences }) => {
-      console.log('Assessor joined:', newPresences)
     })
 
     channel.on('presence', { event: 'leave' }, ({ leftPresences }) => {
-      console.log('Assessor left:', leftPresences)
     })
 
     // Subscribe and track status - use queueMicrotask to avoid sync setState in effect
