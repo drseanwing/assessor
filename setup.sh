@@ -91,12 +91,14 @@ fi
 
 # Initialize log file with header
 init_log() {
-    echo "============================================================================" > "$LOG_FILE"
-    echo "REdI Assessment System - Setup Log" >> "$LOG_FILE"
-    echo "Started at: $(date '+%Y-%m-%d %H:%M:%S %Z')" >> "$LOG_FILE"
-    echo "Script version: $SCRIPT_VERSION" >> "$LOG_FILE"
-    echo "============================================================================" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
+    {
+        echo "============================================================================"
+        echo "REdI Assessment System - Setup Log"
+        echo "Started at: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+        echo "Script version: $SCRIPT_VERSION"
+        echo "============================================================================"
+        echo ""
+    } > "$LOG_FILE"
 }
 
 # Log message to file with timestamp
