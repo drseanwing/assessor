@@ -14,6 +14,7 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-roles.sql:/docker-entrypoint-initdb.d/00-roles.sql
       - ./supabase/migrations/20260125_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./supabase/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
@@ -113,9 +114,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: >
-      bash -c "./prod/rel/realtime/bin/realtime eval Realtime.Release.migrate
-      && ./prod/rel/realtime/bin/realtime start"
 
   storage:
     image: supabase/storage-api:v0.46.4
