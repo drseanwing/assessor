@@ -1,0 +1,41 @@
+_format_version: "2.1"
+
+services:
+  - name: rest
+    url: http://rest:3000
+    routes:
+      - name: rest-route
+        paths:
+          - /rest/v1/
+        strip_path: true
+    plugins:
+      - name: cors
+
+  - name: realtime
+    url: http://realtime:4000/socket
+    routes:
+      - name: realtime-route
+        paths:
+          - /realtime/v1/
+        strip_path: true
+    plugins:
+      - name: cors
+
+  - name: storage
+    url: http://storage:5000
+    routes:
+      - name: storage-route
+        paths:
+          - /storage/v1/
+        strip_path: true
+    plugins:
+      - name: cors
+
+  - name: meta
+    url: http://meta:8080
+    routes:
+      - name: meta-route
+        paths:
+          - /pg/
+        strip_path: true
+
