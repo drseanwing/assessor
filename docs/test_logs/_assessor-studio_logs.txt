@@ -1,0 +1,5 @@
+   ▲ Next.js 16.0.11
+   - Local:         http://e9ab14433922:3000
+   - Network:       http://e9ab14433922:3000
+ ✓ Starting...
+ ✓ Ready in 295ms

@@ -56,7 +56,7 @@ export interface Course {
   course_name: string
   course_date: string
   course_coordinator: string | null
-  sharepoint_ref: string | null
+  redi_event_id: number | null
   created_at: string
   updated_at: string
 }
@@ -70,6 +70,7 @@ export interface Participant {
   work_area: string | null
   assessment_role: AssessmentRole
   engagement_rating: number | null
+  redi_participant_id: number | null
   created_at: string
   updated_at: string
 }

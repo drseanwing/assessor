@@ -1,0 +1,14 @@
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}
+postgrest: FatalError {fatalErrorMessage = "user error (The JWT secret must be at least 32 characters long.)"}

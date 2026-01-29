@@ -1,191 +1,117 @@
-version: '3.8'
+# REdI Assessment System - Docker Compose
+# Self-contained deployment: PostgreSQL + PostgREST + Worker + Frontend
+#
+# Usage:
+#   cp .env.docker .env        # Configure environment
+#   docker compose up -d       # Start all services
+#   docker compose logs -f     # View logs
+#
+# Services:
+#   db       - PostgreSQL 16 (port 5432)
+#   rest     - PostgREST API (port 3000, proxied via nginx)
+#   worker   - Node.js backend for REdI sync/reports/email (port 5000, proxied via nginx)
+#   frontend - nginx serving React SPA + reverse proxy (port 80)
 
 services:
-  postgres:
-    image: supabase/postgres:15.8.1.085
-    container_name: assessor-postgres
+  db:
+    image: postgres:16-alpine
     restart: unless-stopped
+    # Port 5432 is only reachable within the Docker network.
+    # For admin access, use: docker compose exec db psql -U redi_admin -d redi_assessment
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: /var/run/postgresql
-    ports:
-      - "${POSTGRES_PORT}:5432"
+      POSTGRES_DB: redi_assessment
+      POSTGRES_USER: redi_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-redi_secret_change_me}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-roles.sql:/docker-entrypoint-initdb.d/00-roles.sql
-      - ./supabase/migrations/20260125_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
-    networks:
-      - assessor-network
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U redi_admin -d redi_assessment"]
       interval: 10s
       timeout: 5s
       retries: 5
     command:
-      - postgres
-      - -c
-      - wal_level=logical
-
-  studio:
-    image: supabase/studio:2026.01.27-sha-6aa59ff
-    container_name: assessor-studio
-    restart: unless-stopped
-    ports:
-      - "${STUDIO_PORT}:3000"
-    environment:
-      SUPABASE_URL: http://kong:8000
-      STUDIO_PG_META_URL: http://meta:8080
-      SUPABASE_ANON_KEY: ${ANON_KEY}
-      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
-    networks:
-      - assessor-network
-    depends_on:
-      kong:
-        condition: service_healthy
-
-  kong:
-    image: kong:2.8.1
-    container_name: assessor-kong
-    restart: unless-stopped
-    ports:
-      - "${KONG_HTTP_PORT}:8000"
-      - "${KONG_HTTPS_PORT}:8443"
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
-      KONG_DNS_ORDER: LAST,A,CNAME
-      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
-      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
-      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
-    volumes:
-      - ./docker/kong.yml:/var/lib/kong/kong.yml:ro
-    networks:
-      - assessor-network
-    depends_on:
-      - rest
-      - realtime
-      - storage
-      - meta
-    healthcheck:
-      test: ["CMD", "kong", "health"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
 
   rest:
-    image: postgrest/postgrest:v14.3
-    container_name: assessor-rest
+    image: postgrest/postgrest:v12.2.3
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      PGRST_DB_URI: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PGRST_DB_URI: postgres://authenticator:${DB_PASSWORD:-redi_secret_change_me}@db:5432/redi_assessment
       PGRST_DB_SCHEMAS: public
-      PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: ${JWT_SECRET}
-      PGRST_DB_USE_LEGACY_GUCS: "false"
-    networks:
-      - assessor-network
-    depends_on:
-      postgres:
-        condition: service_healthy
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-token-for-redi-assessment-minimum-32-chars}
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_DB_POOL: 10
+      PGRST_DB_POOL_TIMEOUT: 10
+    # PostgREST is only reachable within Docker network (proxied via nginx at /rest/v1/)
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  realtime:
-    image: supabase/realtime:v2.72.0
-    container_name: assessor-realtime
+  worker:
+    build: ./worker
     restart: unless-stopped
-    environment:
-      PORT: 4000
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB}
-      DB_USER: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_SSL: "false"
-      JWT_SECRET: ${JWT_SECRET}
-      REPLICATION_MODE: RLS
-      REPLICATION_POLL_INTERVAL: 100
-      SECURE_CHANNELS: "true"
-      SLOT_NAME: supabase_realtime_rls
-      TEMPORARY_SLOT: "true"
-    networks:
-      - assessor-network
     depends_on:
-      postgres:
-        condition: service_healthy
-
-  storage:
-    image: supabase/storage-api:v1.33.5
-    container_name: assessor-storage
-    restart: unless-stopped
-    environment:
-      ANON_KEY: ${ANON_KEY}
-      SERVICE_KEY: ${SERVICE_ROLE_KEY}
-      POSTGREST_URL: http://rest:3000
-      PGRST_JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      FILE_SIZE_LIMIT: 52428800
-      STORAGE_BACKEND: file
-      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
-      TENANT_ID: stub
-      REGION: stub
-      GLOBAL_S3_BUCKET: stub
-    volumes:
-      - storage_data:/var/lib/storage
-    networks:
-      - assessor-network
-    depends_on:
-      postgres:
+      db:
         condition: service_healthy
       rest:
-        condition: service_started
-
-  meta:
-    image: supabase/postgres-meta:v0.95.2
-    container_name: assessor-meta
-    restart: unless-stopped
-    environment:
-      PG_META_PORT: 8080
-      PG_META_DB_HOST: postgres
-      PG_META_DB_PORT: 5432
-      PG_META_DB_NAME: ${POSTGRES_DB}
-      PG_META_DB_USER: ${POSTGRES_USER}
-      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
-    networks:
-      - assessor-network
-    depends_on:
-      postgres:
         condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://redi_admin:${DB_PASSWORD:-redi_secret_change_me}@db:5432/redi_assessment
+      REDI_API_BASE_URL: ${REDI_API_BASE_URL:-https://prod-xx.australiaeast.logic.azure.com}
+      REDI_PARTICIPANT_LOOKUP_URL: ${REDI_PARTICIPANT_LOOKUP_URL:-}
+      REDI_EVENT_AVAILABILITY_URL: ${REDI_EVENT_AVAILABILITY_URL:-}
+      REDI_FACULTY_AVAILABILITY_URL: ${REDI_FACULTY_AVAILABILITY_URL:-}
+      REDI_PARTICIPANT_UPSERT_URL: ${REDI_PARTICIPANT_UPSERT_URL:-}
+      REDI_EVENT_UPSERT_URL: ${REDI_EVENT_UPSERT_URL:-}
+      REDI_SEND_EMAIL_URL: ${REDI_SEND_EMAIL_URL:-}
+      REDI_CALENDAR_EVENT_URL: ${REDI_CALENDAR_EVENT_URL:-}
+      REDI_EMAIL_CERTIFICATE_URL: ${REDI_EMAIL_CERTIFICATE_URL:-}
+      REPORT_EMAIL_TO: ${REPORT_EMAIL_TO:-redi@health.qld.gov.au}
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-token-for-redi-assessment-minimum-32-chars}
+      PORT: 5000
+      NODE_ENV: production
+    # Worker is only reachable within Docker network (proxied via nginx at /worker/)
+    volumes:
+      - reports:/app/data/reports
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:5000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-        VITE_SUPABASE_ANON_KEY: ${ANON_KEY}
-    container_name: assessor-frontend
+        VITE_SUPABASE_URL: ""
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoid2ViX2Fub24iLCJpc3MiOiJyZWRpLWFzc2Vzc21lbnQiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.0kvCzSN2-C1ixi73OJsue5ktCYCKNbt7P0G7mLtk__g}
     restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT}:80"
-    networks:
-      - assessor-network
     depends_on:
-      kong:
+      rest:
         condition: service_healthy
+      worker:
+        condition: service_healthy
+    ports:
+      - "80:80"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 3s
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
 volumes:
-  postgres_data:
+  pgdata:
     driver: local
-  storage_data:
+  reports:
     driver: local
-
-networks:
-  assessor-network:
-    driver: bridge

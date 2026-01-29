@@ -12,6 +12,11 @@ node_modules/
 *.swo
 .DS_Store
 
+# Environment files (contain secrets)
+.env
+.env.local
+.env.production
+
 # Build
 dist/
 

@@ -1,6 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { RealtimeChannel } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { useEffect, useState, useCallback, useRef } from 'react'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
@@ -37,7 +35,6 @@ interface UseRealtimeReturn {
   isOtherAssessorEditing: (participantId: string, componentId?: string) => boolean
 }
 
-// Helper function to get assessor info from localStorage (outside component)
 function getAssessorInfoFromStorage(): { assessor_id: string; name: string } | null {
   try {
     const stored = localStorage.getItem('redi-auth-storage')
@@ -60,162 +57,152 @@ export function useRealtime({
 }: UseRealtimeOptions = {}): UseRealtimeReturn {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting')
   const [activeAssessors, setActiveAssessors] = useState<PresenceInfo[]>([])
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const presenceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const presenceRef = useRef<{ participantId: string; componentId: string | null }>({
     participantId: '',
     componentId: null
   })
-  
-  // Memoize participantIds to create a stable dependency
-  const participantIdsKey = useMemo(() => participantIds.join(','), [participantIds])
+  const reconnectAttemptsRef = useRef(0)
 
-  // Set up realtime channel
+  // Store callbacks in refs to avoid reconnection on callback change
+  const callbacksRef = useRef({ onAssessmentChange, onScoreChange, onPresenceChange })
+  callbacksRef.current = { onAssessmentChange, onScoreChange, onPresenceChange }
+
   useEffect(() => {
     if (!courseId) return
 
-    const channelName = `course-${courseId}-assessments`
-    
-    const channel = supabase.channel(channelName, {
-      config: {
-        presence: {
-          key: getAssessorInfoFromStorage()?.assessor_id || 'anonymous',
-        },
-      },
-    })
+    const connect = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
 
-    // Handle connection status
-    channel.on('system', { event: 'connected' }, () => {
-      setConnectionStatus('connected')
-    })
-
-    channel.on('system', { event: 'disconnected' }, () => {
-      setConnectionStatus('disconnected')
-    })
-
-    // Subscribe to component_assessments changes
-    if (participantIds.length > 0) {
-      channel.on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'component_assessments',
-          filter: `participant_id=in.(${participantIds.join(',')})`
-        },
-        (payload) => {
-          if (onAssessmentChange) {
-            onAssessmentChange({
-              eventType: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE',
-              new: payload.new as Record<string, unknown>,
-              old: payload.old as Record<string, unknown>
-            })
-          }
-        }
-      )
-
-      // Subscribe to outcome_scores changes
-      channel.on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'outcome_scores'
-        },
-        (payload) => {
-          if (onScoreChange) {
-            onScoreChange({
-              eventType: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE',
-              new: payload.new as Record<string, unknown>,
-              old: payload.old as Record<string, unknown>
-            })
-          }
-        }
-      )
-    }
-
-    // Handle presence sync
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState() as PresenceState
-      const assessors: PresenceInfo[] = []
-      
-      for (const [, presences] of Object.entries(state)) {
-        for (const presence of presences) {
-          assessors.push(presence as unknown as PresenceInfo)
-        }
-      }
-      
-      setActiveAssessors(assessors)
-      if (onPresenceChange) {
-        onPresenceChange(state)
-      }
-    })
-
-    // Presence join/leave events are handled by the sync callback above
-    channel.on('presence', { event: 'join' }, () => {})
-    channel.on('presence', { event: 'leave' }, () => {})
-
-    // Subscribe and track status - use queueMicrotask to avoid sync setState in effect
-    queueMicrotask(() => setConnectionStatus('connecting'))
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
+      ws.onopen = () => {
         setConnectionStatus('connected')
-        
-        // Track initial presence
+        reconnectAttemptsRef.current = 0
+
+        // Subscribe to course changes
+        ws.send(JSON.stringify({
+          type: 'subscribe',
+          courseId,
+          participantIds
+        }))
+
+        // Start presence tracking
         const assessor = getAssessorInfoFromStorage()
         if (assessor) {
-          await channel.track({
-            assessorId: assessor.assessor_id,
-            assessorName: assessor.name,
-            participantId: presenceRef.current.participantId,
-            componentId: presenceRef.current.componentId,
-            lastSeen: new Date().toISOString()
-          })
+          const sendPresence = () => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'presence',
+                courseId,
+                assessorId: assessor.assessor_id,
+                assessorName: assessor.name,
+                participantId: presenceRef.current.participantId,
+                componentId: presenceRef.current.componentId
+              }))
+            }
+          }
+          sendPresence()
+          presenceIntervalRef.current = setInterval(sendPresence, 15000)
         }
-      } else if (status === 'CHANNEL_ERROR') {
-        setConnectionStatus('reconnecting')
-      } else if (status === 'CLOSED') {
-        setConnectionStatus('disconnected')
       }
-    })
 
-    channelRef.current = channel
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+
+          if (msg.type === 'change') {
+            const payload: RealtimePayload = {
+              eventType: msg.action as 'INSERT' | 'UPDATE' | 'DELETE',
+              new: msg.record || {},
+              old: msg.old_record || {}
+            }
+
+            if (msg.table === 'component_assessments') {
+              callbacksRef.current.onAssessmentChange?.(payload)
+            } else if (msg.table === 'outcome_scores') {
+              callbacksRef.current.onScoreChange?.(payload)
+            }
+          } else if (msg.type === 'presence_state') {
+            setActiveAssessors(msg.assessors || [])
+            if (callbacksRef.current.onPresenceChange) {
+              const state: PresenceState = {}
+              for (const a of msg.assessors || []) {
+                if (!state[a.assessorId]) state[a.assessorId] = []
+                state[a.assessorId].push(a)
+              }
+              callbacksRef.current.onPresenceChange(state)
+            }
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      ws.onclose = () => {
+        setConnectionStatus('reconnecting')
+        if (presenceIntervalRef.current) {
+          clearInterval(presenceIntervalRef.current)
+        }
+
+        // Exponential backoff reconnection
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000)
+        reconnectAttemptsRef.current++
+        reconnectTimeoutRef.current = setTimeout(connect, delay)
+      }
+
+      ws.onerror = () => {
+        ws.close()
+      }
+
+      wsRef.current = ws
+    }
+
+    setConnectionStatus('connecting')
+    connect()
 
     return () => {
-      channel.unsubscribe()
-      channelRef.current = null
+      if (wsRef.current) {
+        wsRef.current.close()
+        wsRef.current = null
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+      if (presenceIntervalRef.current) {
+        clearInterval(presenceIntervalRef.current)
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- participantIdsKey is a memoized version of participantIds
-  }, [courseId, participantIdsKey, onAssessmentChange, onScoreChange, onPresenceChange])
+  }, [courseId, participantIds])
 
-  // Function to update presence tracking
-  const trackPresence = useCallback(async (participantId: string, componentId: string | null) => {
+  const trackPresence = useCallback((participantId: string, componentId: string | null) => {
     presenceRef.current = { participantId, componentId }
-    
-    if (channelRef.current) {
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       const assessor = getAssessorInfoFromStorage()
       if (assessor) {
-        await channelRef.current.track({
+        wsRef.current.send(JSON.stringify({
+          type: 'presence',
+          courseId,
           assessorId: assessor.assessor_id,
           assessorName: assessor.name,
           participantId,
-          componentId,
-          lastSeen: new Date().toISOString()
-        })
+          componentId
+        }))
       }
     }
-  }, [])
+  }, [courseId])
 
-  // Check if another assessor is currently editing
   const isOtherAssessorEditing = useCallback((participantId: string, componentId?: string): boolean => {
     const assessor = getAssessorInfoFromStorage()
     const currentAssessorId = assessor?.assessor_id
-    
+
     return activeAssessors.some(a => {
       if (a.assessorId === currentAssessorId) return false
       if (a.participantId !== participantId) return false
       if (componentId && a.componentId !== componentId) return false
-      
-      // Check if last seen is within last 30 seconds (active)
+
       const lastSeen = new Date(a.lastSeen)
       const now = new Date()
       const diffSeconds = (now.getTime() - lastSeen.getTime()) / 1000

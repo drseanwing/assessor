@@ -1,0 +1,45 @@
++ ulimit -n
+1048576
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
++ ulimit -n
+1048576
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576
++ ulimit -n
+/app/run.sh: line 6: RLIMIT_NOFILE: unbound variable
+1048576

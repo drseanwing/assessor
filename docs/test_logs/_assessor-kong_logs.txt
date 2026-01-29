@@ -1,0 +1,18 @@
+2026/01/29 11:59:16 [warn] 1#0: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /usr/local/kong/nginx.conf:6
+nginx: [warn] the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /usr/local/kong/nginx.conf:6
+2026/01/29 11:59:16 [notice] 1#0: using the "epoll" event method
+2026/01/29 11:59:16 [notice] 1#0: openresty/1.19.9.1
+2026/01/29 11:59:16 [notice] 1#0: built by gcc 6.4.0 (Alpine 6.4.0) 
+2026/01/29 11:59:16 [notice] 1#0: OS: Linux 6.8.0-90-generic
+2026/01/29 11:59:16 [notice] 1#0: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2026/01/29 11:59:16 [notice] 1#0: start worker processes
+2026/01/29 11:59:16 [notice] 1#0: start worker process 1107
+2026/01/29 11:59:16 [notice] 1#0: start worker process 1108
+2026/01/29 11:59:16 [notice] 1#0: start worker process 1109
+2026/01/29 11:59:16 [notice] 1#0: start worker process 1110
+2026/01/29 11:59:16 [notice] 1108#0: *2 [lua] init.lua:260: purge(): [DB cache] purging (local) cache, context: init_worker_by_lua*
+2026/01/29 11:59:16 [notice] 1108#0: *2 [lua] init.lua:260: purge(): [DB cache] purging (local) cache, context: init_worker_by_lua*
+2026/01/29 11:59:16 [notice] 1108#0: *2 [kong] init.lua:426 declarative config loaded from /var/lib/kong/kong.yml, context: init_worker_by_lua*
+2026/01/29 11:59:16 [notice] 1108#0: *2 [kong] init.lua:312 only worker #0 can manage, context: init_worker_by_lua*
+2026/01/29 11:59:16 [notice] 1109#0: *3 [kong] init.lua:312 only worker #0 can manage, context: init_worker_by_lua*
+2026/01/29 11:59:16 [notice] 1110#0: *4 [kong] init.lua:312 only worker #0 can manage, context: init_worker_by_lua*
