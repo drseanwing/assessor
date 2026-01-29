@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --redi-coral: #E55B64;
+    --redi-navy: #1B3A5F;
+    --redi-teal: #2B9E9E;
+
+    /* Secondary Colors */
+    --redi-light-teal: #8DD4D4;
+    --redi-lime: #B8CC26;
+    --redi-sky: #5DADE2;
+    --redi-yellow: #F4D03F;
+
+    /* Neutrals */
+    --redi-black: #000000;
+    --redi-dark-gray: #333333;
+    --redi-medium-gray: #666666;
+    --redi-light-gray: #F5F5F5;
+    --redi-white: #FFFFFF;
+
+    /* Semantic */
+    --redi-error: #DC3545;
+    --redi-warning: #FFC107;
+    --redi-success: #28A745;
+    --redi-info: #17A2B8;
+  }
+
+  body {
+    color: var(--redi-dark-gray);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus states per brand accessibility guidelines */
+  :focus-visible {
+    outline: 3px solid var(--redi-teal);
+    outline-offset: 2px;
+  }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

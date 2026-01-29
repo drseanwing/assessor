@@ -21,7 +21,7 @@ export default function ComponentTabs({
         case 'in_progress':
           return 'bg-yellow-500 text-white'
         default:
-          return 'bg-blue-500 text-white'
+          return 'bg-redi-coral text-white'
       }
     }
     switch (status) {

@@ -36,7 +36,7 @@ export default function ActiveAssessorsBadge({
 
   return (
     <div 
-      className="flex items-center space-x-1.5 px-2 py-1 bg-purple-100 rounded-full text-xs text-purple-700"
+      className="flex items-center space-x-1.5 px-2 py-1 bg-redi-navy/10 rounded-full text-xs text-redi-navy"
       title={`Also editing: ${uniqueNames.join(', ')}`}
     >
       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

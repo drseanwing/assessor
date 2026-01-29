@@ -25,7 +25,7 @@ export default function ComponentCell({ status }: ComponentCellProps) {
       case 'complete':
         return 'bg-green-500'
       case 'in_progress':
-        return 'bg-blue-500'
+        return 'bg-redi-teal'
       case 'issues':
         return 'bg-orange-500'
       default:
@@ -38,7 +38,7 @@ export default function ComponentCell({ status }: ComponentCellProps) {
       case 'complete':
         return 'bg-green-100'
       case 'in_progress':
-        return 'bg-blue-100'
+        return 'bg-redi-teal/20'
       case 'issues':
         return 'bg-orange-100'
       default:
@@ -66,7 +66,7 @@ export default function ComponentCell({ status }: ComponentCellProps) {
         )
       case 'in_progress':
         return (
-          <span className="text-xs font-medium text-blue-600">{progressPercent}%</span>
+          <span className="text-xs font-medium text-redi-teal">{progressPercent}%</span>
         )
       default:
         return null

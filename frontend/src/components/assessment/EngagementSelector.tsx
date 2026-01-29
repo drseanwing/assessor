@@ -22,7 +22,7 @@ export default function EngagementSelector({ value, onChange, disabled = false }
               flex items-center justify-center
               transition-all duration-150
               ${isSelected 
-                ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-2' 
+                ? 'bg-redi-teal/20 ring-2 ring-redi-teal ring-offset-2'
                 : 'bg-gray-100 hover:bg-gray-200'}
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}

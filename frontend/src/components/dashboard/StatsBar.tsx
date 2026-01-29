@@ -26,7 +26,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                className="bg-redi-teal h-2.5 rounded-full transition-all duration-300"
                 style={{ width: `${stats.progressPercent}%` }}
               />
             </div>
@@ -36,7 +36,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center space-x-6">
             {/* Participants */}
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-redi-navy">
                 {stats.participantsComplete}/{stats.totalParticipants}
               </div>
               <div className="text-xs text-gray-500 uppercase">Complete</div>

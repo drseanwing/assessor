@@ -419,7 +419,7 @@ export default function CourseDashboardPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -435,11 +435,11 @@ export default function CourseDashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-center text-gray-900 mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-center text-redi-navy mb-2">Error</h2>
           <p className="text-gray-600 text-center mb-4">{error}</p>
           <button
             onClick={handleBack}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            className="w-full bg-redi-coral text-white py-2 px-4 rounded-lg hover:bg-redi-coral-dark"
           >
             Go Back
           </button>
@@ -451,7 +451,7 @@ export default function CourseDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm print:shadow-none">
+      <header className="bg-white shadow-sm border-b-2 border-redi-coral print:shadow-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -465,7 +465,7 @@ export default function CourseDashboardPage() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-redi-navy">
                   {course?.course_name}
                 </h1>
                 <p className="text-sm text-gray-600">
@@ -502,7 +502,7 @@ export default function CourseDashboardPage() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as typeof filter)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-redi-teal"
             >
               <option value="all">All Participants</option>
               <option value="incomplete">Incomplete</option>
@@ -516,7 +516,7 @@ export default function CourseDashboardPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-redi-teal"
             >
               <option value="name">Name</option>
               <option value="progress">Progress</option>
@@ -527,7 +527,7 @@ export default function CourseDashboardPage() {
           <button
             onClick={() => setShowFeedbackPanel(!showFeedbackPanel)}
             className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              showFeedbackPanel ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              showFeedbackPanel ? 'bg-redi-teal/20 text-redi-teal' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

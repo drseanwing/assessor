@@ -79,7 +79,7 @@ export default function DashboardGrid({
         )
       case 'in_progress':
         return (
-          <svg className="w-5 h-5 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-redi-teal animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         )
@@ -93,11 +93,11 @@ export default function DashboardGrid({
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'TEAM_LEADER':
-        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-purple-100 text-purple-700">TL</span>
+        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-redi-navy/10 text-redi-navy">TL</span>
       case 'TEAM_MEMBER':
-        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-green-100 text-green-700">TM</span>
+        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-redi-teal/10 text-redi-teal">TM</span>
       case 'BOTH':
-        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">Both</span>
+        return <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-redi-sky/10 text-redi-sky">Both</span>
       default:
         return null
     }
@@ -119,7 +119,7 @@ export default function DashboardGrid({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No participants found</h3>
+        <h3 className="text-lg font-medium text-redi-navy mb-2">No participants found</h3>
         <p className="text-gray-600">No participants match the current filter criteria.</p>
       </div>
     )
@@ -275,7 +275,7 @@ export default function DashboardGrid({
             <span className="w-4 h-4 rounded-full bg-green-500"></span> Complete
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-blue-500"></span> In Progress
+            <span className="w-4 h-4 rounded-full bg-redi-teal"></span> In Progress
           </span>
           <span className="flex items-center gap-1">
             <span className="w-4 h-4 rounded-full bg-gray-300"></span> Not Started
