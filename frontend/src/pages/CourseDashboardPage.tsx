@@ -246,7 +246,6 @@ export default function CourseDashboardPage() {
   }, [participants, components, loadAssessmentData])
   
   const loadCourseData = async () => {
->>>>>>> 0083fce47222c1dc69cf3990d5b0ccb6efef066e
     setLoading(true)
     setError('')
 

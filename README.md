@@ -23,13 +23,69 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended)
+
+The fastest way to get started is using Docker Compose:
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Start all services (PostgreSQL, API, Frontend, etc.)
+docker compose up -d
+
+# Check service health
+docker compose ps
+
+# View logs
+docker compose logs -f
+```
+
+The application will be available at:
+- **Frontend**: http://localhost:7385
+- **Database UI**: http://localhost:7389
+- **API Gateway**: http://localhost:7387
+
+See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
+
+### Option 2: Prerequisites for Manual Setup
 
 - Node.js 20+
 - PostgreSQL 14+ (or Supabase account)
 - npm or yarn
 
-### Database Setup
+### Automated Setup (Recommended)
+
+The easiest way to set up the application is using the automated setup script:
+
+```bash
+# Make the script executable
+chmod +x setup.sh
+
+# Run interactive setup
+./setup.sh
+
+# Or run unattended setup with Supabase
+./setup.sh --yes --skip-db --supabase-url 'YOUR_SUPABASE_URL' --supabase-key 'YOUR_SUPABASE_KEY'
+
+# Or run unattended setup with local PostgreSQL
+./setup.sh --yes --db-name redi_assessment --db-user postgres
+```
+
+The setup script will:
+- ✅ Check for required dependencies (Node.js, npm, PostgreSQL)
+- ✅ Install frontend dependencies
+- ✅ Configure the database (create, migrate, seed)
+- ✅ Set up environment variables
+- ✅ Verify the build
+
+Run `./setup.sh --help` for all available options.
+
+### Manual Setup
+
+If you prefer manual setup, follow these steps:
+
+#### Database Setup
 
 1. **Option A: Using Supabase** (Recommended)
    ```bash
@@ -46,7 +102,7 @@ See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
 See [supabase/README.md](supabase/README.md) for detailed database setup instructions.
 
-### Frontend Setup
+#### Frontend Setup
 
 ```bash
 cd frontend
