@@ -29,11 +29,11 @@ export default function OutcomeRow({
   const getRoleBadgeColor = (role: AssessmentRole) => {
     switch (role) {
       case 'TEAM_LEADER':
-        return 'bg-purple-100 text-purple-700'
+        return 'bg-redi-navy/10 text-redi-navy'
       case 'TEAM_MEMBER':
-        return 'bg-green-100 text-green-700'
+        return 'bg-redi-teal/10 text-redi-teal'
       case 'BOTH':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-redi-sky/10 text-redi-sky'
       default:
         return 'bg-gray-100 text-gray-600'
     }

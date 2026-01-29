@@ -82,11 +82,11 @@ export default function ParticipantListPage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'TEAM_LEADER':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-redi-navy/10 text-redi-navy'
       case 'TEAM_MEMBER':
-        return 'bg-green-100 text-green-800'
+        return 'bg-redi-teal/10 text-redi-teal'
       case 'BOTH':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-redi-sky/10 text-redi-sky'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -99,7 +99,7 @@ export default function ParticipantListPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm border-b-2 border-redi-coral">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -112,7 +112,7 @@ export default function ParticipantListPage() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-redi-navy">
                   {course?.course_name || 'Course Participants'}
                 </h1>
                 <p className="text-sm text-gray-600 mt-1">
@@ -139,7 +139,7 @@ export default function ParticipantListPage() {
               placeholder="Search by name, payroll, designation, or work area..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
             />
             <div className="absolute left-3 top-3.5">
               <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +159,7 @@ export default function ParticipantListPage() {
         {/* Loading State */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal"></div>
           </div>
         ) : filteredParticipants.length === 0 ? (
           /* No Participants */
@@ -239,7 +239,7 @@ export default function ParticipantListPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button 
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-redi-coral hover:text-redi-coral-dark font-medium"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleParticipantClick(participant.participant_id)

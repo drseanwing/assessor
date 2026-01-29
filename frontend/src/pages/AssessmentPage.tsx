@@ -150,11 +150,11 @@ export default function AssessmentPage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'TEAM_LEADER':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-redi-navy/10 text-redi-navy'
       case 'TEAM_MEMBER':
-        return 'bg-green-100 text-green-800'
+        return 'bg-redi-teal/10 text-redi-teal'
       case 'BOTH':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-redi-sky/10 text-redi-sky'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -168,7 +168,7 @@ export default function AssessmentPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading assessment...</p>
         </div>
       </div>
@@ -184,11 +184,11 @@ export default function AssessmentPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-center text-gray-900 mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-center text-redi-navy mb-2">Error</h2>
           <p className="text-gray-600 text-center mb-4">{error}</p>
           <button
             onClick={handleBack}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            className="w-full bg-redi-coral text-white py-2 px-4 rounded-lg hover:bg-redi-coral-dark"
           >
             Go Back
           </button>
@@ -200,7 +200,7 @@ export default function AssessmentPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white shadow-sm border-b-2 border-redi-coral sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -214,7 +214,7 @@ export default function AssessmentPage() {
                 </svg>
               </button>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">
+                <h1 className="text-lg font-bold text-redi-navy truncate">
                   {participant?.candidate_name}
                 </h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -258,7 +258,7 @@ export default function AssessmentPage() {
           <>
             {/* Component Header with Quick Pass */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-redi-navy">
                 {components.find(c => c.component_id === activeComponentId)?.component_name}
               </h2>
               <QuickPassButton
@@ -324,7 +324,7 @@ export default function AssessmentPage() {
         
         {/* Overall Assessment Section */}
         <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Overall Assessment</h2>
+          <h2 className="text-lg font-semibold text-redi-navy mb-4">Overall Assessment</h2>
           
           {/* Engagement Score */}
           <div className="mb-4">

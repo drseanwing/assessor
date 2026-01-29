@@ -42,7 +42,7 @@ export default function BondySelector({ value, onChange, disabled = false }: Bon
               transition-all duration-150
               ${getScoreColor(option.score, isSelected)}
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-              ${isSelected ? 'ring-2 ring-offset-2 ring-blue-400' : ''}
+              ${isSelected ? 'ring-2 ring-offset-2 ring-redi-teal' : ''}
             `}
             title={`${option.label}: ${option.description}`}
             aria-label={option.label}

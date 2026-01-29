@@ -7,7 +7,7 @@ import type { Assessor } from '../types/database'
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setAssessor, setSessionExpiry, isAuthenticated } = useAuthStore()
-  
+
   const [assessors, setAssessors] = useState<Assessor[]>([])
   const [selectedAssessor, setSelectedAssessor] = useState<string>('')
   const [pin, setPin] = useState<string>('')
@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    
+
     if (!selectedAssessor) {
       setError('Please select an assessor')
       return
@@ -66,7 +66,7 @@ export default function LoginPage() {
       const expiryTime = Date.now() + (12 * 60 * 60 * 1000)
       setAssessor(result.assessor)
       setSessionExpiry(expiryTime)
-      
+
       // Navigate to courses
       navigate('/courses')
     } else {
@@ -78,28 +78,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-redi-light-teal/20 to-redi-navy/10 px-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-5xl font-display text-redi-navy mb-2 tracking-wide">
             REdI Assess
           </h1>
-          <p className="text-gray-600">
+          <p className="text-redi-navy/70">
             Competency Assessment System
           </p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+          <h2 className="text-2xl font-semibold text-redi-navy mb-6">
             Assessor Login
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Assessor Selection */}
             <div>
-              <label 
+              <label
                 htmlFor="assessor"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 id="assessor"
                 value={selectedAssessor}
                 onChange={(e) => setSelectedAssessor(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
                 disabled={loading || assessors.length === 0}
               >
                 {assessors.length === 0 ? (
@@ -126,7 +126,7 @@ export default function LoginPage() {
 
             {/* PIN Input */}
             <div>
-              <label 
+              <label
                 htmlFor="pin"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 value={pin}
                 onChange={(e) => handlePinChange(e.target.value)}
                 placeholder="••••"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent text-center text-2xl tracking-widest"
                 disabled={loading}
                 maxLength={4}
                 autoComplete="off"
@@ -157,22 +157,22 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !selectedAssessor || pin.length !== 4}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+              className="w-full bg-redi-coral hover:bg-redi-coral-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
           {/* Development Note */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-xs text-yellow-800">
+          <div className="mt-6 p-4 bg-redi-yellow/20 border border-redi-yellow/40 rounded-lg">
+            <p className="text-xs text-redi-navy">
               <strong>Development Mode:</strong> Any 4-digit PIN will work for demo purposes.
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 text-sm text-gray-600">
+        <div className="text-center mt-6 text-sm text-redi-navy/60">
           <p>Queensland Health - Resuscitation Education Initiative</p>
         </div>
       </div>
