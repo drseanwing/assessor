@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: supabase/postgres:15.1.0.147
+    image: supabase/postgres:15.8.1.085
     container_name: assessor-postgres
     restart: unless-stopped
     environment:
@@ -30,7 +30,7 @@ services:
       - wal_level=logical
 
   studio:
-    image: supabase/studio:20240101-ce42139
+    image: supabase/studio:2026.01.27-sha-6aa59ff
     container_name: assessor-studio
     restart: unless-stopped
     ports:
@@ -76,7 +76,7 @@ services:
       retries: 5
 
   rest:
-    image: postgrest/postgrest:v12.0.1
+    image: postgrest/postgrest:v14.3
     container_name: assessor-rest
     restart: unless-stopped
     environment:
@@ -92,7 +92,7 @@ services:
         condition: service_healthy
 
   realtime:
-    image: supabase/realtime:v2.27.5
+    image: supabase/realtime:v2.72.0
     container_name: assessor-realtime
     restart: unless-stopped
     environment:
@@ -116,7 +116,7 @@ services:
         condition: service_healthy
 
   storage:
-    image: supabase/storage-api:v0.46.4
+    image: supabase/storage-api:v1.33.5
     container_name: assessor-storage
     restart: unless-stopped
     environment:
@@ -142,7 +142,7 @@ services:
         condition: service_started
 
   meta:
-    image: supabase/postgres-meta:v0.75.0
+    image: supabase/postgres-meta:v0.95.2
     container_name: assessor-meta
     restart: unless-stopped
     environment:
