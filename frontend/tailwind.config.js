@@ -20,10 +20,6 @@ export default {
           'yellow': '#F4D03F',
         }
       },
-      fontFamily: {
-        'sans': ['Montserrat', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
-        'display': ['Bebas Neue', 'Impact', 'Arial Black', 'sans-serif'],
-      },
       boxShadow: {
         'redi-sm': '0 1px 2px rgba(0,0,0,0.1)',
         'redi-md': '0 4px 6px rgba(0,0,0,0.1)',
