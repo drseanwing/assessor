@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-01-29T13:58:59.137Z",
+  "trigger": "auto",
+  "active_modes": {
+    "ultrawork": {
+      "original_prompt": "@docs/test_logs/ has container logs from the first attempt to launch this in docker on a dev server. There are multiple issues in multiple containers.\n\nRalph ULW\n\nBuild a comprehensive list of the errors identified; then investigate all possible causes of the errors before diagnosing an issue; develop a comprehensive \"fix\" plan for all the issues and then allocate these to subagents.\n\nOn completion run a comprehensive code review and validation, update all documentation, commit, merge and push."
+    }
+  },
+  "todo_summary": {
+    "pending": 0,
+    "in_progress": 0,
+    "completed": 0
+  },
+  "wisdom_exported": false
+}
