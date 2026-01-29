@@ -43,7 +43,7 @@ describe('BondySelector', () => {
       const independentButton = screen.getByLabelText('Independent')
       expect(independentButton).toHaveClass('bg-green-500')
       expect(independentButton).toHaveClass('ring-2')
-      expect(independentButton).toHaveClass('ring-blue-400')
+      expect(independentButton).toHaveClass('ring-redi-teal')
     })
 
     it('should render with SUPERVISED selected', () => {
@@ -193,7 +193,7 @@ describe('BondySelector', () => {
       const independentButton = screen.getByLabelText('Independent')
       expect(independentButton.className).toContain('ring-2')
       expect(independentButton.className).toContain('ring-offset-2')
-      expect(independentButton.className).toContain('ring-blue-400')
+      expect(independentButton.className).toContain('ring-redi-teal')
     })
 
     it('should not show ring around unselected options', () => {

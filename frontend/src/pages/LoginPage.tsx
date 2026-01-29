@@ -82,7 +82,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-redi-navy mb-2">
+          <h1 className="text-5xl font-display text-redi-navy mb-2 tracking-wide">
             REdI Assess
           </h1>
           <p className="text-redi-navy/70">
