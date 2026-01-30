@@ -68,7 +68,9 @@ export function useRealtime({
 
   // Store callbacks in refs to avoid reconnection on callback change
   const callbacksRef = useRef({ onAssessmentChange, onScoreChange, onPresenceChange })
-  callbacksRef.current = { onAssessmentChange, onScoreChange, onPresenceChange }
+  useEffect(() => {
+    callbacksRef.current = { onAssessmentChange, onScoreChange, onPresenceChange }
+  })
 
   useEffect(() => {
     if (!courseId) return
@@ -159,6 +161,7 @@ export function useRealtime({
       wsRef.current = ws
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: reset status when dependencies change
     setConnectionStatus('connecting')
     connect()
 
