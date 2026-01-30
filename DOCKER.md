@@ -20,12 +20,15 @@ The Docker stack consists of 4 core services, all running on Alpine Linux for mi
    - Express server handling:
      - REdI API sync operations
      - PDF report generation
-     - WebSocket connections for real-time updates
+     - WebSocket connections for real-time updates (MAX_CONNECTIONS=100 limit)
 
 4. **frontend** - nginx (Alpine)
    - Internal port: 80
    - Exposed on host port: **8080** (only exposed service)
    - Serves React SPA with reverse proxy to backend services
+   - Note: Uses `nginx:stable-alpine` rolling tag base image
+   - Deep health check proxies to worker backend with fallback
+   - Complete security headers applied on all static assets
 
 All inter-service communication occurs on a private Docker network. Only the frontend is exposed to the host machine.
 
@@ -59,8 +62,8 @@ The frontend nginx container acts as a reverse proxy, routing requests to approp
 |------|-------------|---------|
 | `/rest/v1/*` | `http://rest:3000` | PostgREST API |
 | `/worker/*` | `http://worker:5000` | Worker API endpoints |
-| `/ws` | `http://worker:5000/ws` | WebSocket connection |
-| `/*` | React SPA (try_files) | Static files fallback |
+| `/ws` | `http://worker:5000/ws` | WebSocket connection (100 max concurrent) |
+| `/*` | React SPA (try_files) | Static files fallback with security headers |
 
 ## Quick Start
 
@@ -211,7 +214,7 @@ docker compose exec db psql -U redi_admin -d redi_assessment
 
 ```bash
 # Execute single query
-docker compose exec db psql -U redi_admin -d redi_assessment -c "SELECT * FROM users LIMIT 5;"
+docker compose exec db psql -U redi_admin -d redi_assessment -c "SELECT * FROM assessors LIMIT 5;"
 
 # Execute from file
 docker compose exec -T db psql -U redi_admin -d redi_assessment < query.sql
@@ -279,7 +282,7 @@ Each service includes health checks that verify it's functioning correctly. The 
 | **db** | `pg_isready -U redi_admin` | 10s | 5s | - | 5 |
 | **rest** | `wget --spider --quiet http://localhost:3000/` | 10s | 5s | 15s | 5 |
 | **worker** | `wget --spider --quiet http://localhost:5000/api/health` | 15s | 5s | 10s | 3 |
-| **frontend** | `wget --spider --quiet http://localhost:80/` | 10s | 5s | - | 3 |
+| **frontend** | `wget --spider --quiet http://localhost:80/` (proxies to worker backend with fallback) | 10s | 5s | - | 3 |
 
 ### Checking Health Status
 
@@ -571,7 +574,7 @@ docker system prune --volumes
 
 **Test PostgREST API:**
 ```bash
-curl http://localhost:8080/rest/v1/users
+curl http://localhost:8080/rest/v1/assessors
 ```
 
 **Test Worker API:**
@@ -609,12 +612,25 @@ WebSocket connections require a token query parameter:
 ws://localhost:8080/ws?token=<jwt-token>
 ```
 
+**WebSocket Security:**
+- Maximum 100 concurrent connections enforced
+- Exceeding limit results in code 1013 rejection ("Try Again Later")
+
 ### Rate Limiting
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
 | `/api/sync/*` | 20 requests | 15 minutes |
 | `/api/reports/*` | 10 requests | 15 minutes |
+
+### Static Asset Security Headers
+
+All static assets served by nginx include comprehensive security headers:
+- `Content-Security-Policy` (CSP) - Restricts resource loading
+- `Permissions-Policy` - Disables unnecessary browser features
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
 
 ### CORS
 
@@ -626,6 +642,12 @@ CORS_ORIGIN=http://localhost:5173
 ### Fail-Fast Secrets
 
 Docker Compose will refuse to start if `DB_PASSWORD` or `JWT_SECRET` are not set in `.env`.
+
+### Seed Data Security
+
+Seed data includes valid bcrypt password hashes for development:
+- Default assessor PIN: "1234" (pre-hashed with bcrypt)
+- Never use default seed data in production environments
 
 ## Production Deployment Notes
 

@@ -7,7 +7,7 @@ ARG VITE_SUPABASE_URL=
 ARG VITE_SUPABASE_ANON_KEY
 RUN npm run build
 
-FROM nginx:1.25-alpine
+FROM nginx:stable-alpine
 
 # Create nginx cache and runtime directories with proper permissions
 RUN mkdir -p /var/cache/nginx/client_temp \

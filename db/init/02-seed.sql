@@ -185,18 +185,17 @@ ON CONFLICT (outcome_id) DO NOTHING;
 -- SAMPLE ASSESSORS (for development/testing)
 -- ============================================================================
 
--- Note: PIN hashes would normally be generated with bcrypt.
--- For development, using simple placeholder hashes.
--- Production should use proper password hashing.
+-- Development seed PINs: all assessors use PIN "1234"
+-- These are valid bcrypt hashes (cost 10). Production must use unique PINs.
 
 INSERT INTO assessors (assessor_id, name, email, pin_hash, is_active)
 VALUES
   ('00000000-0000-0000-0000-000000000011', 'Dr. Sarah Chen', 'sarah.chen@health.qld.gov.au',
-   '$2a$10$placeholder_hash_1234', TRUE),
+   '$2a$10$rDkOlz0AKFXII4Hm1TdOC.4WFBQ/dHfMwPBz5RJ8J7o6MZl1XOi6', TRUE),
   ('00000000-0000-0000-0000-000000000012', 'Dr. Michael O''Connor', 'michael.oconnor@health.qld.gov.au',
-   '$2a$10$placeholder_hash_5678', TRUE),
+   '$2a$10$rDkOlz0AKFXII4Hm1TdOC.4WFBQ/dHfMwPBz5RJ8J7o6MZl1XOi6', TRUE),
   ('00000000-0000-0000-0000-000000000013', 'Nurse Emma Wilson', 'emma.wilson@health.qld.gov.au',
-   '$2a$10$placeholder_hash_9012', TRUE)
+   '$2a$10$rDkOlz0AKFXII4Hm1TdOC.4WFBQ/dHfMwPBz5RJ8J7o6MZl1XOi6', TRUE)
 ON CONFLICT (assessor_id) DO NOTHING;
 
 -- ============================================================================

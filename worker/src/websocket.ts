@@ -24,6 +24,7 @@ interface ClientState {
 }
 
 const clients = new Map<WebSocket, ClientState>();
+const MAX_CONNECTIONS = 100;
 
 export function setupWebSocket(server: HttpServer): WebSocketServer {
   const wss = new WebSocketServer({
@@ -46,6 +47,13 @@ export function setupWebSocket(server: HttpServer): WebSocketServer {
   });
 
   wss.on("connection", (ws) => {
+    // Enforce connection limit
+    if (clients.size >= MAX_CONNECTIONS) {
+      console.warn(`WebSocket connection rejected: limit of ${MAX_CONNECTIONS} reached`);
+      ws.close(1013, "Maximum connections reached");
+      return;
+    }
+
     console.log("WebSocket client connected (authenticated)");
 
     clients.set(ws, { ws, subscription: null, presence: null });

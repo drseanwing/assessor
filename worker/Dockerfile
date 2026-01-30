@@ -20,8 +20,8 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-RUN addgroup -S worker && adduser -S worker -G worker
-RUN chown -R worker:worker /app
+RUN addgroup -S worker && adduser -S worker -G worker \
+    && chown -R worker:worker /app
 USER worker
 
 EXPOSE 5000

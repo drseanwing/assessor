@@ -225,6 +225,11 @@ CREATE TRIGGER update_participants_updated_at
 -- NOTIFY TRIGGERS (for worker WebSocket bridge)
 -- ============================================================================
 
+-- NOTE: The payload includes full row data via row_to_json(). This sends all
+-- column values over the NOTIFY channel. The WebSocket layer (websocket.ts)
+-- filters recipients by subscription, and all WebSocket connections require
+-- JWT authentication. If row data becomes sensitive, consider sending only
+-- primary keys and having clients re-fetch via PostgREST.
 CREATE OR REPLACE FUNCTION notify_assessment_change()
 RETURNS TRIGGER AS $$
 BEGIN
