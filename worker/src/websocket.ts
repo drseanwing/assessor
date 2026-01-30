@@ -1,5 +1,6 @@
 import { type Server as HttpServer } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
+import jwt from "jsonwebtoken";
 import pg from "pg";
 import { config } from "./config.js";
 
@@ -25,10 +26,27 @@ interface ClientState {
 const clients = new Map<WebSocket, ClientState>();
 
 export function setupWebSocket(server: HttpServer): WebSocketServer {
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({
+    server,
+    maxPayload: 64 * 1024, // 64KB max message size
+    verifyClient: (info, callback) => {
+      const url = new URL(info.req.url || "", `http://${info.req.headers.host}`);
+      const token = url.searchParams.get("token");
+      if (!token) {
+        callback(false, 401, "Missing authentication token");
+        return;
+      }
+      try {
+        jwt.verify(token, config.jwtSecret);
+        callback(true);
+      } catch {
+        callback(false, 401, "Invalid or expired token");
+      }
+    },
+  });
 
   wss.on("connection", (ws) => {
-    console.log("WebSocket client connected");
+    console.log("WebSocket client connected (authenticated)");
 
     clients.set(ws, { ws, subscription: null, presence: null });
 

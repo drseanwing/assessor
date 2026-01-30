@@ -30,4 +30,6 @@ export const config = {
   syncCron: optional("SYNC_CRON", "0 6 * * *"),
   reportCron: optional("REPORT_CRON", "0 18 * * 1-5"),
   reportDir: optional("REPORT_DIR", "/app/data/reports"),
+  corsOrigin: optional("CORS_ORIGIN", ""),
+  nodeEnv: optional("NODE_ENV", "development"),
 };

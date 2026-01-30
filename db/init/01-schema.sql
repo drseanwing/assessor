@@ -2,7 +2,7 @@
 -- Adapted from Supabase migration for self-hosted PostgreSQL 16 + PostgREST
 --
 -- Changes from Supabase version:
---   - Removed all RLS policies and ENABLE ROW LEVEL SECURITY statements
+--   - Added Row-Level Security policies for web_anon and redi_worker roles
 --   - Removed Supabase-specific realtime publication comments
 --   - Changed courses.sharepoint_ref VARCHAR(500) -> redi_event_id INTEGER
 --   - Added participants.redi_participant_id INTEGER
@@ -258,12 +258,73 @@ CREATE TRIGGER notify_overall_assessments_change
 
 GRANT USAGE ON SCHEMA public TO web_anon;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO web_anon;
+-- Read-only on reference and operational data
+GRANT SELECT ON assessors, course_templates, template_components, template_outcomes,
+  courses, participants TO web_anon;
+
+-- Full CRUD on assessment workflow tables only
+GRANT SELECT, INSERT, UPDATE, DELETE ON component_assessments, outcome_scores,
+  overall_assessments TO web_anon;
+
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO web_anon;
 
--- Ensure future tables/sequences are also accessible
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO web_anon;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO web_anon;
+-- ============================================================================
+-- ROW-LEVEL SECURITY
+-- ============================================================================
+-- RLS restricts row access per role. The table owner (redi_admin) bypasses RLS.
+-- web_anon: permissive read/write for assessment workflow (API auth is at app layer)
+-- redi_worker: permissive access for sync and report operations
+
+ALTER TABLE assessors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_components ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_outcomes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE component_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE outcome_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE overall_assessments ENABLE ROW LEVEL SECURITY;
+
+-- web_anon: read-only access to reference/config data
+CREATE POLICY web_anon_select_assessors ON assessors FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_select_templates ON course_templates FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_select_components ON template_components FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_select_outcomes ON template_outcomes FOR SELECT TO web_anon USING (true);
+
+-- web_anon: read-only access to course/participant data
+CREATE POLICY web_anon_select_courses ON courses FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_select_participants ON participants FOR SELECT TO web_anon USING (true);
+
+-- web_anon: full CRUD on assessment data (the core workflow)
+CREATE POLICY web_anon_all_assessments ON component_assessments FOR ALL TO web_anon USING (true) WITH CHECK (true);
+CREATE POLICY web_anon_all_scores ON outcome_scores FOR ALL TO web_anon USING (true) WITH CHECK (true);
+CREATE POLICY web_anon_all_overall ON overall_assessments FOR ALL TO web_anon USING (true) WITH CHECK (true);
+
+-- ============================================================================
+-- GRANTS FOR Worker Service (redi_worker role)
+-- ============================================================================
+-- Least-privilege: SELECT on all tables, write only to sync targets.
+-- No DROP, ALTER, CREATE, or superuser privileges.
+
+GRANT USAGE ON SCHEMA public TO redi_worker;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO redi_worker;
+GRANT INSERT, UPDATE ON courses, participants TO redi_worker;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO redi_worker;
+
+-- RLS policies for redi_worker (permissive — worker is a trusted internal service)
+CREATE POLICY worker_select_assessors ON assessors FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_templates ON course_templates FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_components ON template_components FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_outcomes ON template_outcomes FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_courses ON courses FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_insert_courses ON courses FOR INSERT TO redi_worker WITH CHECK (true);
+CREATE POLICY worker_update_courses ON courses FOR UPDATE TO redi_worker USING (true) WITH CHECK (true);
+CREATE POLICY worker_select_participants ON participants FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_insert_participants ON participants FOR INSERT TO redi_worker WITH CHECK (true);
+CREATE POLICY worker_update_participants ON participants FOR UPDATE TO redi_worker USING (true) WITH CHECK (true);
+CREATE POLICY worker_select_assessments ON component_assessments FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_scores ON outcome_scores FOR SELECT TO redi_worker USING (true);
+CREATE POLICY worker_select_overall ON overall_assessments FOR SELECT TO redi_worker USING (true);
 
 -- ============================================================================
 -- LOGICAL REPLICATION PUBLICATION

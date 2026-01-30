@@ -29,7 +29,7 @@ The fastest way to get started is using Docker Compose:
 
 ```bash
 # Copy environment template
-cp .env.docker .env
+cp .env.docker.example .env
 
 # Start all services (PostgreSQL, API, Frontend, etc.)
 docker compose up -d

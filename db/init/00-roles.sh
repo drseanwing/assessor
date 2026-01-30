@@ -29,6 +29,10 @@ psql -v ON_ERROR_STOP=1 \
   -- The password is safely injected via psql variable substitution.
   CREATE ROLE authenticator NOINHERIT LOGIN PASSWORD :'password';
   GRANT web_anon TO authenticator;
+
+  -- redi_worker: least-privilege role for the worker service.
+  -- Has SELECT on all tables, INSERT/UPDATE on sync targets, no superuser access.
+  CREATE ROLE redi_worker NOINHERIT LOGIN PASSWORD :'password';
 EOSQL
 
 echo "PostgREST roles created successfully."

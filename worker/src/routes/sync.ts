@@ -7,6 +7,7 @@ import {
 } from "../services/sync.js";
 import { query } from "../db.js";
 import { isRediSyncConfigured } from "../services/redi-api.js";
+import { sanitizeError } from "../utils/errors.js";
 
 export const syncRouter = Router();
 
@@ -26,7 +27,7 @@ syncRouter.post("/courses", async (_req: Request, res: Response) => {
     console.error("Course sync failed:", err);
     res.status(500).json({
       success: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: sanitizeError(err),
     });
   }
 });
@@ -70,7 +71,7 @@ syncRouter.post(
       console.error("Participant sync failed:", err);
       res.status(500).json({
         success: false,
-        error: err instanceof Error ? err.message : String(err),
+        error: sanitizeError(err),
       });
     }
   }
@@ -92,7 +93,7 @@ syncRouter.post("/all", async (_req: Request, res: Response) => {
     console.error("Full sync failed:", err);
     res.status(500).json({
       success: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: sanitizeError(err),
     });
   }
 });

@@ -67,13 +67,13 @@ The frontend nginx container acts as a reverse proxy, routing requests to approp
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- `.env.docker` file in the project root (or copy from `.env.example`)
+- `.env.docker.example` file in the project root (or copy from `.env.example`)
 
 ### First Run
 
 1. **Copy environment file**:
    ```bash
-   cp .env.docker .env
+   cp .env.docker.example .env
    ```
 
    **IMPORTANT:** Edit `.env` and set these required values BEFORE starting:
@@ -115,7 +115,7 @@ docker compose down -v
 
 ### Required Variables
 
-Copy `.env.docker` to `.env` before first run. **DO NOT use `.env.example`** — that file is for the legacy Supabase setup.
+Copy `.env.docker.example` to `.env` before first run. **DO NOT use `.env.example`** — that file is for the legacy Supabase setup.
 
 **Critical variables that must be set:**
 
@@ -132,7 +132,7 @@ Copy `.env.docker` to `.env` before first run. **DO NOT use `.env.example`** —
 ### Optional Variables
 
 - `SUPABASE_ANON_KEY` - Pre-signed JWT for anonymous access
-  - Auto-generated if using `.env.docker` defaults
+  - Auto-generated if using `.env.docker.example` defaults
   - Must be regenerated if `JWT_SECRET` changes
 
 - REdI API integration variables:
@@ -585,6 +585,48 @@ curl http://localhost:8080/worker/api/health
 websocat ws://localhost:8080/ws
 ```
 
+## Security Architecture
+
+### Database Row-Level Security (RLS)
+
+All 9 tables have RLS enabled. Access is controlled per PostgreSQL role:
+
+| Role | Reference Tables | Course/Participant | Assessment Tables |
+|------|-----------------|-------------------|-------------------|
+| `redi_admin` | Full (owner) | Full (owner) | Full (owner) |
+| `web_anon` | SELECT only | SELECT only | Full CRUD |
+| `redi_worker` | SELECT only | SELECT, INSERT, UPDATE | SELECT only |
+
+### Worker API Authentication
+
+All worker API endpoints (except `/api/health`) require a JWT Bearer token:
+```
+Authorization: Bearer <jwt-token>
+```
+
+WebSocket connections require a token query parameter:
+```
+ws://localhost:8080/ws?token=<jwt-token>
+```
+
+### Rate Limiting
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| `/api/sync/*` | 20 requests | 15 minutes |
+| `/api/reports/*` | 10 requests | 15 minutes |
+
+### CORS
+
+CORS is disabled by default (same-origin via nginx proxy). Set `CORS_ORIGIN` in `.env` for development:
+```
+CORS_ORIGIN=http://localhost:5173
+```
+
+### Fail-Fast Secrets
+
+Docker Compose will refuse to start if `DB_PASSWORD` or `JWT_SECRET` are not set in `.env`.
+
 ## Production Deployment Notes
 
 **This Docker configuration is designed for development/testing.** Before deploying to production:
@@ -593,7 +635,7 @@ websocat ws://localhost:8080/ws
    - Generate strong `DB_PASSWORD` and `JWT_SECRET`
    - Use secrets management system (AWS Secrets Manager, Kubernetes Secrets, etc.)
    - Enable HTTPS/TLS for nginx
-   - Configure proper CORS headers
+   - Review and tighten RLS policies for your access requirements
 
 2. **Performance Optimization**
    - Configure PostgreSQL connection pooling
@@ -623,7 +665,7 @@ Key files:
 
 - `docker-compose.yml` - Main service definitions and configuration
 - `docker/postgrest/Dockerfile` - Custom PostgREST image with health check support
-- `.env.docker` - Default environment variables for development (copy to `.env`)
+- `.env.docker.example` - Default environment variables for development (copy to `.env`)
 - `.dockerignore` - Files excluded from builds
 
 ## Support and Resources
