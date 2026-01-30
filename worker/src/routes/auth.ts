@@ -26,17 +26,17 @@ authRouter.post("/login", async (req, res) => {
       [assessorId]
     );
 
-    if (result.rows.length === 0) {
-      res.status(401).json({ success: false, error: "Assessor not found or inactive" });
-      return;
-    }
-
+    // Always perform bcrypt comparison to prevent timing attacks
+    // Use a dummy hash if user doesn't exist
     const assessor = result.rows[0];
+    const hashToCompare = assessor?.pin_hash || "$2a$10$dummyhashtopreventtimingattacksxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-    // Compare PIN with bcrypt hash from database
-    const isValid = await bcrypt.compare(pin, assessor.pin_hash);
-    if (!isValid) {
-      res.status(401).json({ success: false, error: "Invalid PIN" });
+    // Compare PIN with bcrypt hash (always runs, even for invalid users)
+    const isValid = await bcrypt.compare(pin, hashToCompare);
+
+    // Check if user exists and PIN is valid
+    if (!assessor || !isValid) {
+      res.status(401).json({ success: false, error: "Invalid credentials" });
       return;
     }
 

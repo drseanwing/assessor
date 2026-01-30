@@ -32,6 +32,7 @@ export default function AssessmentPage() {
     activeComponentId,
     saveStatus,
     lastSaved,
+    saveError,
     setParticipant,
     setComponents,
     setOutcomes,
@@ -142,12 +143,13 @@ export default function AssessmentPage() {
     if (courseId && participantId) {
       loadData()
     }
-    
+
     return () => {
       // Clean up on unmount
       reset()
     }
-  }, [courseId, participantId, loadData, reset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, participantId])
   
   const handleBack = () => {
     navigate(`/course/${courseId}/participants`)
@@ -178,7 +180,7 @@ export default function AssessmentPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center" role="status" aria-label="Loading">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto" aria-hidden="true"></div>
-          <p className="mt-4 text-gray-600">Loading assessment...</p>
+          <p className="mt-4 text-gray-700">Loading assessment...</p>
         </div>
       </div>
     )
@@ -189,12 +191,12 @@ export default function AssessmentPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
           <div className="text-red-500 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h2 className="text-xl font-bold text-center text-redi-navy mb-2">Error</h2>
-          <p className="text-gray-600 text-center mb-4">{error}</p>
+          <p className="text-gray-700 text-center mb-4">{error}</p>
           <button
             onClick={handleBack}
             className="w-full bg-redi-coral text-white py-2 px-4 rounded-lg hover:bg-redi-coral-dark"
@@ -218,7 +220,7 @@ export default function AssessmentPage() {
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="Go back"
               >
-                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -243,7 +245,7 @@ export default function AssessmentPage() {
                 currentParticipantId={participantId}
                 currentComponentId={activeComponentId || undefined}
               />
-              <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
+              <SaveIndicator status={saveStatus} lastSaved={lastSaved} error={saveError} />
             </div>
           </div>
         </div>
@@ -260,9 +262,9 @@ export default function AssessmentPage() {
           />
         </div>
       </div>
-      
+
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-4">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-4">
         {activeComponentId && (
           <>
             {/* Component Header with Quick Pass */}
@@ -278,7 +280,7 @@ export default function AssessmentPage() {
             
             {/* Bondy Scale Legend */}
             <div className="mb-4 p-3 bg-gray-100 rounded-lg">
-              <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+              <div className="flex flex-wrap gap-3 text-xs text-gray-700">
                 <span className="flex items-center gap-1">
                   <span className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center font-semibold">I</span>
                   Independent
@@ -442,7 +444,7 @@ export default function AssessmentPage() {
             <SyncIndicator status={connectionStatus} />
             <span className="text-sm text-gray-600">{assessor?.name}</span>
           </div>
-          <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
+          <SaveIndicator status={saveStatus} lastSaved={lastSaved} error={saveError} />
         </div>
       </div>
     </div>

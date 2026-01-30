@@ -50,7 +50,8 @@ interface AssessmentState {
   activeComponentId: string | null
   saveStatus: 'idle' | 'saving' | 'saved' | 'error'
   lastSaved: Date | null
-  
+  saveError: string | null
+
   // Actions
   setParticipant: (participant: Participant) => void
   setComponents: (components: TemplateComponent[]) => void
@@ -77,7 +78,8 @@ interface AssessmentState {
   
   // Save to database
   saveChanges: () => Promise<void>
-  
+  cancelPendingSave: () => void
+
   // Utility
   getComponentStatus: (componentId: string) => 'not_started' | 'in_progress' | 'complete'
   reset: () => void
@@ -99,8 +101,13 @@ const initialState = {
   },
   activeComponentId: null,
   saveStatus: 'idle' as const,
-  lastSaved: null
+  lastSaved: null,
+  saveError: null
 }
+
+// Module-level variables for saveChanges debounce (accessible by reset for cleanup)
+let saveTimeoutId: ReturnType<typeof setTimeout> | null = null
+let saveInProgress = false
 
 export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   ...initialState,
@@ -167,8 +174,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
           for (const score of scoreData) {
             scores[score.outcome_id] = {
               outcomeId: score.outcome_id,
-              bondyScore: score.bondy_score,
-              binaryScore: score.binary_score,
+              bondyScore: score.bondy_score as BondyScore | null,
+              binaryScore: score.binary_score as BinaryScore | null,
               isDirty: false
             }
           }
@@ -416,10 +423,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
     get().saveChanges()
   },
   
-  saveChanges: (() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-    let saveInProgress = false
-
+  saveChanges: async () => {
     // Helper to get current assessor from localStorage
     const getCurrentAssessorId = (): string | null => {
       try {
@@ -434,13 +438,12 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       return null
     }
 
-    return async () => {
-      // Debounce saves
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
+    // Debounce saves using module-level variable
+    if (saveTimeoutId) {
+      clearTimeout(saveTimeoutId)
+    }
 
-      timeoutId = setTimeout(async () => {
+    saveTimeoutId = setTimeout(async () => {
         if (saveInProgress) return
 
         const { participant, componentAssessments, overallAssessment } = get()
@@ -589,7 +592,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
             }
           }
           
-          set({ saveStatus: 'saved', lastSaved: new Date() })
+          set({ saveStatus: 'saved', lastSaved: new Date(), saveError: null })
 
           // Reset status after delay
           setTimeout(() => {
@@ -598,13 +601,26 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
 
         } catch (error) {
           console.error('Error saving assessments:', error)
-          set({ saveStatus: 'error' })
+          const errorMessage = error instanceof Error ? error.message : 'Failed to save changes'
+          set({ saveStatus: 'error', saveError: errorMessage })
+
+          // Keep error visible longer (5 seconds) to ensure user sees it
+          setTimeout(() => {
+            set({ saveStatus: 'idle', saveError: null })
+          }, 5000)
         } finally {
           saveInProgress = false
         }
       }, 1000) // 1 second debounce
+  },
+
+  cancelPendingSave: () => {
+    if (saveTimeoutId) {
+      clearTimeout(saveTimeoutId)
+      saveTimeoutId = null
     }
-  })(),
+    saveInProgress = false
+  },
   
   getComponentStatus: (componentId) => {
     const { outcomes, componentAssessments, participant } = get()
@@ -636,5 +652,9 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
     return 'in_progress'
   },
   
-  reset: () => set(initialState)
+  reset: () => {
+    // Cancel any pending saves before resetting
+    get().cancelPendingSave()
+    set(initialState)
+  }
 }))

@@ -77,6 +77,21 @@ app.use("/api/auth", loginLimiter, authRouter);
 app.use("/api/sync", requireAuth, syncLimiter, syncRouter);
 app.use("/api/reports", requireAuth, reportsLimiter, reportsRouter);
 
+// Global error handler (must be after all routes)
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("Unhandled error:", err);
+
+  // Don't expose internal error details in production
+  const message = process.env.NODE_ENV === "production"
+    ? "Internal server error"
+    : err.message;
+
+  res.status(500).json({
+    success: false,
+    error: message
+  });
+});
+
 const server = createServer(app);
 
 const wss = setupWebSocket(server);

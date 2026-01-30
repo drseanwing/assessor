@@ -103,7 +103,7 @@ export default function LoginPage() {
                 htmlFor="assessor"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Select Assessor
+                Select Assessor <span className="text-red-500" aria-label="required">*</span>
               </label>
               <select
                 id="assessor"
@@ -111,6 +111,10 @@ export default function LoginPage() {
                 onChange={(e) => setSelectedAssessor(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
                 disabled={loading || assessors.length === 0}
+                required
+                aria-required="true"
+                aria-invalid={error && !selectedAssessor ? 'true' : 'false'}
+                aria-describedby={error ? 'login-error' : undefined}
               >
                 {assessors.length === 0 ? (
                   <option value="">Loading assessors...</option>
@@ -130,7 +134,7 @@ export default function LoginPage() {
                 htmlFor="pin"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                4-Digit PIN
+                4-Digit PIN <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
                 id="pin"
@@ -143,12 +147,24 @@ export default function LoginPage() {
                 disabled={loading}
                 maxLength={4}
                 autoComplete="off"
+                required
+                aria-required="true"
+                aria-invalid={error ? 'true' : 'false'}
+                aria-describedby={error ? 'login-error' : 'pin-help'}
               />
+              <p id="pin-help" className="mt-1 text-xs text-gray-600">
+                Enter your 4-digit numeric PIN
+              </p>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div
+                id="login-error"
+                role="alert"
+                aria-live="polite"
+                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+              >
                 {error}
               </div>
             )}

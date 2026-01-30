@@ -32,29 +32,27 @@ psql -v ON_ERROR_STOP=1 \
 
   -- authenticator: the role PostgREST connects to PostgreSQL with.
   -- NOINHERIT means it must explicitly SET ROLE to web_anon after connecting.
-  -- The password is safely injected via psql variable substitution.
+  -- Create if not exists, then set password
   DO $$
   BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'authenticator') THEN
-      CREATE ROLE authenticator NOINHERIT LOGIN PASSWORD :'auth_password';
+      CREATE ROLE authenticator NOINHERIT LOGIN;
       GRANT web_anon TO authenticator;
-    ELSE
-      ALTER ROLE authenticator WITH PASSWORD :'auth_password';
     END IF;
   END
   $$;
+  ALTER ROLE authenticator WITH PASSWORD :'auth_password';
 
   -- redi_worker: least-privilege role for the worker service.
   -- Has SELECT on all tables, INSERT/UPDATE on sync targets, no superuser access.
   DO $$
   BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'redi_worker') THEN
-      CREATE ROLE redi_worker NOINHERIT LOGIN PASSWORD :'worker_password';
-    ELSE
-      ALTER ROLE redi_worker WITH PASSWORD :'worker_password';
+      CREATE ROLE redi_worker NOINHERIT LOGIN;
     END IF;
   END
   $$;
+  ALTER ROLE redi_worker WITH PASSWORD :'worker_password';
 EOSQL
 
 echo "PostgREST roles created successfully."

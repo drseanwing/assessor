@@ -18,8 +18,8 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    # Port 5432 is only reachable within the Docker network.
-    # For admin access, use: docker compose exec db psql -U redi_admin -d redi_assessment
+    ports:
+      - "127.0.0.1:2675:5432"
     environment:
       POSTGRES_DB: redi_assessment
       POSTGRES_USER: redi_admin
@@ -47,6 +47,8 @@ services:
   rest:
     build: ./docker/postgrest
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:2676:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -74,6 +76,8 @@ services:
   worker:
     build: ./worker
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:2677:5000"
     depends_on:
       db:
         condition: service_healthy
@@ -108,32 +112,6 @@ services:
         limits:
           memory: 512M
           cpus: '1.0'
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        VITE_SUPABASE_URL: ""
-        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?Set SUPABASE_ANON_KEY in .env (must match JWT_SECRET)}
-    restart: unless-stopped
-    depends_on:
-      rest:
-        condition: service_healthy
-      worker:
-        condition: service_healthy
-    ports:
-      - "8080:80"
-    healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:80/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.5'
 
 volumes:
   pgdata:

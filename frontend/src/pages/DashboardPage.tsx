@@ -10,11 +10,11 @@ export default function DashboardPage() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
+    <main id="main-content" className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center" role="status" aria-live="polite">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto" aria-hidden="true"></div>
+        <p className="mt-4 text-gray-700">Loading...</p>
       </div>
-    </div>
+    </main>
   )
 }

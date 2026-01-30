@@ -84,7 +84,7 @@ export default function CourseListPage() {
               <h1 className="text-2xl font-bold text-redi-navy">
                 REdI Assessment System
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 Welcome, {assessor?.name}
               </p>
             </div>
@@ -149,7 +149,7 @@ export default function CourseListPage() {
             <h3 className="text-lg font-medium text-redi-navy mb-2">
               No courses found
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-700">
               No courses scheduled for {new Date(selectedDate).toLocaleDateString('en-AU', {
                 weekday: 'long',
                 year: 'numeric',
@@ -180,7 +180,7 @@ export default function CourseListPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-gray-700">
                     <div className="flex items-center">
                       <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
