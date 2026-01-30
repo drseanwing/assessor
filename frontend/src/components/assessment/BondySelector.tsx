@@ -14,9 +14,9 @@ export default function BondySelector({ value, onChange, disabled = false }: Bon
       case 'INDEPENDENT':
         return 'bg-green-500 text-white'
       case 'SUPERVISED':
-        return 'bg-lime-500 text-white'
+        return 'bg-lime-600 text-white'
       case 'ASSISTED':
-        return 'bg-yellow-500 text-white'
+        return 'bg-amber-500 text-white'
       case 'MARGINAL':
         return 'bg-orange-500 text-white'
       case 'NOT_OBSERVED':
@@ -37,7 +37,7 @@ export default function BondySelector({ value, onChange, disabled = false }: Bon
             onClick={() => !disabled && onChange(option.score)}
             disabled={disabled}
             className={`
-              w-10 h-10 rounded-lg font-semibold text-sm
+              w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg font-semibold text-sm
               flex items-center justify-center
               transition-all duration-150
               ${getScoreColor(option.score, isSelected)}

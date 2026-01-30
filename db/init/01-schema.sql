@@ -72,6 +72,7 @@ CREATE TABLE template_components (
   component_name VARCHAR(255) NOT NULL,
   component_order INTEGER NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(template_id, component_order)
 );
 
@@ -85,6 +86,7 @@ CREATE TABLE template_outcomes (
   is_mandatory BOOLEAN DEFAULT TRUE,
   applies_to assessment_role NOT NULL DEFAULT 'BOTH',
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(component_id, outcome_order)
 );
 
@@ -140,7 +142,12 @@ CREATE TABLE outcome_scores (
   scored_by UUID REFERENCES assessors(assessor_id),
   scored_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(assessment_id, outcome_id)
+  UNIQUE(assessment_id, outcome_id),
+  CONSTRAINT chk_score_exclusivity CHECK (
+    (bondy_score IS NOT NULL AND binary_score IS NULL) OR
+    (bondy_score IS NULL AND binary_score IS NOT NULL) OR
+    (bondy_score IS NULL AND binary_score IS NULL)
+  )
 );
 
 -- Overall assessments (per participant)
@@ -163,7 +170,7 @@ CREATE TABLE overall_assessments (
 -- ============================================================================
 
 -- Assessors
-CREATE INDEX idx_assessors_email ON assessors(email);
+CREATE UNIQUE INDEX idx_assessors_email_unique ON assessors(email) WHERE email IS NOT NULL;
 CREATE INDEX idx_assessors_active ON assessors(is_active);
 
 -- Template relationships
@@ -221,6 +228,16 @@ CREATE TRIGGER update_participants_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_template_components_updated_at
+  BEFORE UPDATE ON template_components
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_template_outcomes_updated_at
+  BEFORE UPDATE ON template_outcomes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================================================
 -- NOTIFY TRIGGERS (for worker WebSocket bridge)
 -- ============================================================================
@@ -264,11 +281,13 @@ CREATE TRIGGER notify_overall_assessments_change
 GRANT USAGE ON SCHEMA public TO web_anon;
 
 -- Read-only on reference and operational data
-GRANT SELECT ON assessors, course_templates, template_components, template_outcomes,
+-- Note: assessors grants only specific columns (excludes pin_hash)
+GRANT SELECT (assessor_id, name, email, is_active, created_at, updated_at) ON assessors TO web_anon;
+GRANT SELECT ON course_templates, template_components, template_outcomes,
   courses, participants TO web_anon;
 
--- Full CRUD on assessment workflow tables only
-GRANT SELECT, INSERT, UPDATE, DELETE ON component_assessments, outcome_scores,
+-- Read and write on assessment workflow tables only (no DELETE)
+GRANT SELECT, INSERT, UPDATE ON component_assessments, outcome_scores,
   overall_assessments TO web_anon;
 
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO web_anon;
@@ -279,6 +298,13 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO web_anon;
 -- RLS restricts row access per role. The table owner (redi_admin) bypasses RLS.
 -- web_anon: permissive read/write for assessment workflow (API auth is at app layer)
 -- redi_worker: permissive access for sync and report operations
+--
+-- TODO: When JWT claims include assessor_id, tighten these policies:
+--   - component_assessments: USING (last_modified_by = current_setting('request.jwt.claims', true)::json->>'assessor_id')
+--   - outcome_scores: similar scope by scored_by
+--   - For now, all authenticated users can read/write all assessment data.
+--   - This is acceptable for the current deployment where all assessors are
+--     trusted Queensland Health staff on the same course.
 
 ALTER TABLE assessors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_templates ENABLE ROW LEVEL SECURITY;
@@ -300,10 +326,18 @@ CREATE POLICY web_anon_select_outcomes ON template_outcomes FOR SELECT TO web_an
 CREATE POLICY web_anon_select_courses ON courses FOR SELECT TO web_anon USING (true);
 CREATE POLICY web_anon_select_participants ON participants FOR SELECT TO web_anon USING (true);
 
--- web_anon: full CRUD on assessment data (the core workflow)
-CREATE POLICY web_anon_all_assessments ON component_assessments FOR ALL TO web_anon USING (true) WITH CHECK (true);
-CREATE POLICY web_anon_all_scores ON outcome_scores FOR ALL TO web_anon USING (true) WITH CHECK (true);
-CREATE POLICY web_anon_all_overall ON overall_assessments FOR ALL TO web_anon USING (true) WITH CHECK (true);
+-- web_anon: read + write on assessment data (no DELETE)
+CREATE POLICY web_anon_select_assessments ON component_assessments FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_insert_assessments ON component_assessments FOR INSERT TO web_anon WITH CHECK (true);
+CREATE POLICY web_anon_update_assessments ON component_assessments FOR UPDATE TO web_anon USING (true) WITH CHECK (true);
+
+CREATE POLICY web_anon_select_scores ON outcome_scores FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_insert_scores ON outcome_scores FOR INSERT TO web_anon WITH CHECK (true);
+CREATE POLICY web_anon_update_scores ON outcome_scores FOR UPDATE TO web_anon USING (true) WITH CHECK (true);
+
+CREATE POLICY web_anon_select_overall ON overall_assessments FOR SELECT TO web_anon USING (true);
+CREATE POLICY web_anon_insert_overall ON overall_assessments FOR INSERT TO web_anon WITH CHECK (true);
+CREATE POLICY web_anon_update_overall ON overall_assessments FOR UPDATE TO web_anon USING (true) WITH CHECK (true);
 
 -- ============================================================================
 -- GRANTS FOR Worker Service (redi_worker role)

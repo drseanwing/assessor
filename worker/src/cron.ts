@@ -8,35 +8,43 @@ export function startCronJobs(): void {
   const enabledJobs: string[] = [];
 
   if (isRediSyncConfigured()) {
-    cron.schedule(config.syncCron, async () => {
-      console.log(`[CRON] Starting scheduled sync at ${new Date().toISOString()}`);
-      try {
-        const result = await syncAll();
-        console.log(
-          `[CRON] Sync complete: ${result.courses.synced} courses, ${result.participants.synced} participants`
-        );
-      } catch (err) {
-        console.error("[CRON] Scheduled sync failed:", err);
-      }
-    });
-    enabledJobs.push(`  Sync:    ${config.syncCron}`);
+    if (!cron.validate(config.syncCron)) {
+      console.error(`[CRON] Invalid sync cron expression: ${config.syncCron}`);
+    } else {
+      cron.schedule(config.syncCron, async () => {
+        console.log(`[CRON] Starting scheduled sync at ${new Date().toISOString()}`);
+        try {
+          const result = await syncAll();
+          console.log(
+            `[CRON] Sync complete: ${result.courses.synced} courses, ${result.participants.synced} participants`
+          );
+        } catch (err) {
+          console.error("[CRON] Scheduled sync failed:", err);
+        }
+      });
+      enabledJobs.push(`  Sync:    ${config.syncCron}`);
+    }
   } else {
     console.log(`[CRON] REdI sync not configured - skipping sync cron job`);
   }
 
   if (isRediEmailConfigured()) {
-    cron.schedule(config.reportCron, async () => {
-      console.log(
-        `[CRON] Starting scheduled report generation at ${new Date().toISOString()}`
-      );
-      try {
-        const sent = await sendAllDailyReports();
-        console.log(`[CRON] Sent ${sent} daily reports`);
-      } catch (err) {
-        console.error("[CRON] Scheduled report generation failed:", err);
-      }
-    });
-    enabledJobs.push(`  Reports: ${config.reportCron}`);
+    if (!cron.validate(config.reportCron)) {
+      console.error(`[CRON] Invalid report cron expression: ${config.reportCron}`);
+    } else {
+      cron.schedule(config.reportCron, async () => {
+        console.log(
+          `[CRON] Starting scheduled report generation at ${new Date().toISOString()}`
+        );
+        try {
+          const sent = await sendAllDailyReports();
+          console.log(`[CRON] Sent ${sent} daily reports`);
+        } catch (err) {
+          console.error("[CRON] Scheduled report generation failed:", err);
+        }
+      });
+      enabledJobs.push(`  Reports: ${config.reportCron}`);
+    }
   } else {
     console.log(`[CRON] REdI email not configured - skipping report cron job`);
   }

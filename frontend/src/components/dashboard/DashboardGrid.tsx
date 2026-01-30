@@ -1,22 +1,7 @@
-import { useState } from 'react'
-import type { Participant, TemplateComponent } from '../../types/database'
+import { useState, Fragment } from 'react'
+import type { TemplateComponent } from '../../types/database'
+import type { ComponentStatus, ParticipantAssessmentData } from '../../types/assessment'
 import ComponentCell from './ComponentCell'
-
-interface ParticipantAssessmentData {
-  participant: Participant
-  componentStatuses: Record<string, ComponentStatus>
-  overallFeedback: string | null
-  engagementScore: number | null
-}
-
-interface ComponentStatus {
-  componentId: string
-  status: 'not_started' | 'in_progress' | 'complete' | 'issues'
-  scoredCount: number
-  totalCount: number
-  feedback: string | null
-  isQuickPassed: boolean
-}
 
 interface DashboardGridProps {
   data: ParticipantAssessmentData[]
@@ -159,11 +144,12 @@ export default function DashboardGrid({
               const isExpanded = expandedParticipant === item.participant.participant_id
               
               return (
-                <>
-                  <tr 
-                    key={item.participant.participant_id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                <Fragment key={item.participant.participant_id}>
+                  <tr
+                    tabIndex={0}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors focus:outline-none focus:bg-redi-teal/5 focus:ring-2 focus:ring-inset focus:ring-redi-teal"
                     onClick={() => onParticipantClick(item.participant.participant_id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onParticipantClick(item.participant.participant_id); } }}
                   >
                     {/* Participant Info */}
                     <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
@@ -261,7 +247,7 @@ export default function DashboardGrid({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </tbody>

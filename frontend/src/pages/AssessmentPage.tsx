@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useAssessmentStore } from '../stores/assessmentStore'
 import { useRealtime } from '../hooks/useRealtime'
 import { supabase } from '../lib/supabase'
-import type { Participant, TemplateComponent, TemplateOutcome } from '../types/database'
+import type { Participant, TemplateComponent, TemplateOutcome, RecommendedAction } from '../types/database'
 
 import ComponentTabs from '../components/assessment/ComponentTabs'
 import OutcomeRow from '../components/assessment/OutcomeRow'
@@ -43,18 +43,27 @@ export default function AssessmentPage() {
     setComponentFeedback,
     setOverallFeedback,
     setEngagementScore,
+    setTeamLeaderOutcome,
+    setTeamMemberOutcome,
+    setRecommendedAction,
     getComponentStatus,
     reset
   } = useAssessmentStore()
-  
+
+  // Memoize participantIds to prevent infinite reconnects
+  const participantIds = useMemo(
+    () => participantId ? [participantId] : [],
+    [participantId]
+  )
+
   // Realtime hook for multi-assessor sync
-  const { 
-    connectionStatus, 
-    activeAssessors, 
-    trackPresence 
+  const {
+    connectionStatus,
+    activeAssessors,
+    trackPresence
   } = useRealtime({
     courseId,
-    participantIds: participantId ? [participantId] : [],
+    participantIds,
     onAssessmentChange: useCallback(() => {
       // Reload assessments when changes come from other assessors
       loadAssessments()
@@ -161,14 +170,14 @@ export default function AssessmentPage() {
   }
   
   const formatRole = (role: string) => {
-    return role.replace('_', ' ')
+    return role.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto"></div>
+        <div className="text-center" role="status" aria-label="Loading">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto" aria-hidden="true"></div>
           <p className="mt-4 text-gray-600">Loading assessment...</p>
         </div>
       </div>
@@ -275,11 +284,11 @@ export default function AssessmentPage() {
                   Independent
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-lime-500 text-white flex items-center justify-center font-semibold">S</span>
+                  <span className="w-6 h-6 rounded bg-lime-600 text-white flex items-center justify-center font-semibold">S</span>
                   Supervised
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-yellow-500 text-white flex items-center justify-center font-semibold">A</span>
+                  <span className="w-6 h-6 rounded bg-amber-500 text-white flex items-center justify-center font-semibold">A</span>
                   Assisted
                 </span>
                 <span className="flex items-center gap-1">
@@ -288,7 +297,7 @@ export default function AssessmentPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-6 h-6 rounded bg-gray-500 text-white flex items-center justify-center font-semibold">N</span>
-                  Not Obs
+                  Not Observed
                 </span>
               </div>
             </div>
@@ -336,7 +345,86 @@ export default function AssessmentPage() {
               onChange={setEngagementScore}
             />
           </div>
-          
+
+          {/* Outcome Selectors */}
+          {(participant?.assessment_role === 'TEAM_LEADER' || participant?.assessment_role === 'BOTH') && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Team Leader Outcome
+              </label>
+              <div className="flex gap-3">
+                {(['PASS', 'UNSUCCESSFUL_ATTEMPT'] as const).map((outcome) => (
+                  <button
+                    key={outcome}
+                    type="button"
+                    onClick={() => setTeamLeaderOutcome(
+                      overallAssessment.teamLeaderOutcome === outcome ? null : outcome
+                    )}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
+                      overallAssessment.teamLeaderOutcome === outcome
+                        ? outcome === 'PASS'
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {outcome === 'PASS' ? 'Pass' : 'Unsuccessful Attempt'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(participant?.assessment_role === 'TEAM_MEMBER' || participant?.assessment_role === 'BOTH') && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Team Member Outcome
+              </label>
+              <div className="flex gap-3">
+                {(['PASS', 'UNSUCCESSFUL_ATTEMPT'] as const).map((outcome) => (
+                  <button
+                    key={outcome}
+                    type="button"
+                    onClick={() => setTeamMemberOutcome(
+                      overallAssessment.teamMemberOutcome === outcome ? null : outcome
+                    )}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
+                      overallAssessment.teamMemberOutcome === outcome
+                        ? outcome === 'PASS'
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {outcome === 'PASS' ? 'Pass' : 'Unsuccessful Attempt'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommended Action - only show if any outcome is UNSUCCESSFUL_ATTEMPT */}
+          {(overallAssessment.teamLeaderOutcome === 'UNSUCCESSFUL_ATTEMPT' || overallAssessment.teamMemberOutcome === 'UNSUCCESSFUL_ATTEMPT') && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Recommended Action
+              </label>
+              <select
+                value={overallAssessment.recommendedAction || ''}
+                onChange={(e) => setRecommendedAction(
+                  e.target.value ? e.target.value as RecommendedAction : null
+                )}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
+              >
+                <option value="">Select recommended action...</option>
+                <option value="RESTART_LEARNING">Restart Learning</option>
+                <option value="REATTEMPT_COURSE">Reattempt Course</option>
+                <option value="REASSESSMENT_ONLY">Reassessment Only</option>
+                <option value="REFER_EDUCATOR">Refer to Educator</option>
+              </select>
+            </div>
+          )}
+
           {/* Overall Feedback */}
           <FeedbackInput
             value={overallAssessment.feedback}

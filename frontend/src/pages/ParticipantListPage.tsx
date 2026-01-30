@@ -93,7 +93,7 @@ export default function ParticipantListPage() {
   }
 
   const formatRole = (role: string) => {
-    return role.replace('_', ' ')
+    return role.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
   }
 
   return (
@@ -134,7 +134,9 @@ export default function ParticipantListPage() {
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
+            <label htmlFor="participant-search" className="sr-only">Search participants</label>
             <input
+              id="participant-search"
               type="text"
               placeholder="Search by name, payroll, designation, or work area..."
               value={searchTerm}
@@ -158,8 +160,8 @@ export default function ParticipantListPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal"></div>
+          <div className="flex justify-center items-center py-12" role="status" aria-label="Loading">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal" aria-hidden="true"></div>
           </div>
         ) : filteredParticipants.length === 0 ? (
           /* No Participants */
@@ -207,10 +209,12 @@ export default function ParticipantListPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredParticipants.map((participant) => (
-                    <tr 
+                    <tr
                       key={participant.participant_id}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      tabIndex={0}
+                      className="hover:bg-gray-50 cursor-pointer focus:outline-none focus:bg-redi-teal/5 focus:ring-2 focus:ring-inset focus:ring-redi-teal"
                       onClick={() => handleParticipantClick(participant.participant_id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleParticipantClick(participant.participant_id); } }}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">

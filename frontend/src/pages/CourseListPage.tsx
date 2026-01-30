@@ -135,8 +135,8 @@ export default function CourseListPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal"></div>
+          <div className="flex justify-center items-center py-12" role="status" aria-label="Loading">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal" aria-hidden="true"></div>
           </div>
         ) : courses.length === 0 ? (
           /* No Courses */
@@ -164,8 +164,11 @@ export default function CourseListPage() {
             {courses.map((course) => (
               <div
                 key={course.course_id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleCourseClick(course.course_id)}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer overflow-hidden border-l-4 border-redi-teal"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCourseClick(course.course_id); } }}
+                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer overflow-hidden border-l-4 border-redi-teal focus:outline-none focus:ring-2 focus:ring-redi-teal focus:ring-offset-2"
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -179,7 +182,7 @@ export default function CourseListPage() {
 
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center">
-                      <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       {new Date(course.course_date).toLocaleDateString('en-AU', {
@@ -192,7 +195,7 @@ export default function CourseListPage() {
 
                     {course.course_coordinator && (
                       <div className="flex items-center">
-                        <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         {course.course_coordinator}
@@ -200,7 +203,7 @@ export default function CourseListPage() {
                     )}
 
                     <div className="flex items-center">
-                      <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       {course.participant_count} participant{course.participant_count !== 1 ? 's' : ''}

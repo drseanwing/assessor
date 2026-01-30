@@ -13,7 +13,7 @@ The REdI Assessment System enables multiple assessors to simultaneously evaluate
 - **Quick Pass Workflow** - Complete assessment in under 3 minutes for passing candidates
 - **Bondy Scale Assessment** - 5-point competency scale (Independent → Not Observed)
 - **Mobile-First Design** - Optimized for tablets and mobile devices
-- **Offline Support** - Continue working without internet (implemented)
+- **Offline Awareness** - Connection status indicator shows network state
 
 ## Current Status
 
@@ -148,10 +148,11 @@ See [frontend/README.md](frontend/README.md) for detailed frontend setup instruc
 
 ```
 assessor/
-├── supabase/          # Database schema and seed data
-│   ├── migrations/    # SQL migration files
-│   ├── seed.sql       # Sample data
-│   └── README.md
+├── db/                # Database initialization (Docker deployment)
+│   └── init/          # Schema and seed data for PostgreSQL
+├── docker/            # Docker service configurations
+│   ├── postgrest/     # PostgREST API service
+│   └── nginx/         # Frontend nginx config
 ├── frontend/          # React application
 │   ├── src/
 │   │   ├── components/
@@ -160,6 +161,15 @@ assessor/
 │   │   ├── lib/
 │   │   └── types/
 │   └── README.md
+├── worker/            # Node.js backend service
+│   └── src/           # REdI sync, reports, WebSocket
+├── supabase/          # Legacy Supabase schema (reference)
+│   ├── migrations/
+│   └── seed.sql
+├── docs/              # Additional documentation
+│   └── API.md         # Worker API reference
+├── docker-compose.yml # Docker orchestration
+├── Dockerfile         # Frontend build
 ├── redi-assessment-spec.md  # Complete specification
 └── PROGRESS.md        # Implementation progress
 ```
@@ -194,7 +204,7 @@ assessor/
 - OAuth authentication
 
 ### Phase 6: Polish & Deploy (In Progress)
-- Offline support
+- Offline awareness (connection status indicator)
 - End-to-end tests
 - Production deployment
 
@@ -232,16 +242,16 @@ See [redi-assessment-spec.md](redi-assessment-spec.md) for complete specificatio
 ```bash
 cd frontend
 npm test           # Run all tests
-npm test:ui        # Interactive UI
-npm test:coverage  # With coverage
+npm run test:ui    # Interactive UI
+npm run test:coverage  # With coverage
 ```
 
 **End-to-End Tests (Playwright)**
 ```bash
 cd frontend
 npx playwright install  # First time only
-npm run test:e2e        # Run e2e tests
-npm run test:e2e:ui     # With Playwright UI
+npm run test:e2e    # Run e2e tests
+npm run test:e2e:ui # With Playwright UI
 ```
 
 ### Sample Data
@@ -250,7 +260,7 @@ The seed file includes:
 - 3 sample assessors
 - 1 REdI course (January 25, 2026)
 - 3 sample participants
-- Complete REdI template with 4 components and 27 outcomes
+- Complete REdI template with 4 components and 29 outcomes
 
 ### Test Credentials
 

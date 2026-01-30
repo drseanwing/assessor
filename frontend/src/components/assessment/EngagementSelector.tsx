@@ -21,7 +21,7 @@ export default function EngagementSelector({ value, onChange, disabled = false }
               w-12 h-12 rounded-lg text-2xl
               flex items-center justify-center
               transition-all duration-150
-              ${isSelected 
+              ${isSelected
                 ? 'bg-redi-teal/20 ring-2 ring-redi-teal ring-offset-2'
                 : 'bg-gray-100 hover:bg-gray-200'}
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -29,7 +29,7 @@ export default function EngagementSelector({ value, onChange, disabled = false }
             title={option.label}
             aria-label={option.label}
           >
-            {option.emoji}
+            <span aria-hidden="true">{option.emoji}</span>
           </button>
         )
       })}

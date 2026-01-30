@@ -38,7 +38,7 @@ export function setupWebSocket(server: HttpServer): WebSocketServer {
         return;
       }
       try {
-        jwt.verify(token, config.jwtSecret);
+        jwt.verify(token, config.jwtSecret, { algorithms: ["HS256"] });
         callback(true);
       } catch {
         callback(false, 401, "Invalid or expired token");
@@ -84,6 +84,22 @@ export function setupWebSocket(server: HttpServer): WebSocketServer {
 
   connectPgListener();
 
+  // Sweep stale presence every 60 seconds
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ws, state] of clients.entries()) {
+      if (state.presence) {
+        const lastSeen = new Date(state.presence.lastSeen).getTime();
+        if (now - lastSeen > 60000) { // 60 seconds stale threshold
+          state.presence = null;
+          if (state.subscription) {
+            broadcastPresenceState(state.subscription.courseId);
+          }
+        }
+      }
+    }
+  }, 60000);
+
   console.log("WebSocket server initialized");
   return wss;
 }
@@ -94,9 +110,25 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
 
   switch (message.type) {
     case "subscribe": {
+      const courseId = message.courseId;
+      const participantIds = message.participantIds;
+
+      if (typeof courseId !== "string" || !courseId) {
+        console.warn("Invalid subscribe: missing courseId");
+        break;
+      }
+      if (participantIds !== undefined && !Array.isArray(participantIds)) {
+        console.warn("Invalid subscribe: participantIds must be an array");
+        break;
+      }
+      if (Array.isArray(participantIds) && !participantIds.every((id: unknown) => typeof id === "string")) {
+        console.warn("Invalid subscribe: participantIds must be string array");
+        break;
+      }
+
       state.subscription = {
-        courseId: message.courseId as string,
-        participantIds: (message.participantIds as string[]) || [],
+        courseId: courseId as string,
+        participantIds: (participantIds as string[]) || [],
       };
       ws.send(
         JSON.stringify({
@@ -110,11 +142,21 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
     }
 
     case "presence": {
+      const { assessorId, assessorName, participantId, componentId } = message;
+      if (typeof assessorId !== "string" || typeof assessorName !== "string") {
+        console.warn("Invalid presence: missing assessorId or assessorName");
+        break;
+      }
+      if (typeof participantId !== "string") {
+        console.warn("Invalid presence: missing participantId");
+        break;
+      }
+
       state.presence = {
-        assessorId: message.assessorId as string,
-        assessorName: message.assessorName as string,
-        participantId: message.participantId as string,
-        componentId: (message.componentId as string | null) || null,
+        assessorId: assessorId as string,
+        assessorName: assessorName as string,
+        participantId: participantId as string,
+        componentId: typeof componentId === "string" ? componentId : null,
         lastSeen: new Date().toISOString(),
       };
 
@@ -199,13 +241,38 @@ function broadcastAssessmentChange(payload: string): void {
   }
 }
 
+let pgListenerClient: pg.Client | null = null;
+let pgReconnecting = false;
+let pgReconnectAttempts = 0;
+
+export function getPgListenerClient(): pg.Client | null {
+  return pgListenerClient;
+}
+
 async function connectPgListener(): Promise<void> {
+  if (pgReconnecting) return;
+  pgReconnecting = true;
+
+  // End previous client if exists
+  if (pgListenerClient) {
+    try {
+      pgListenerClient.removeAllListeners();
+      await pgListenerClient.end();
+    } catch {
+      // Ignore errors when ending stale client
+    }
+    pgListenerClient = null;
+  }
+
   const client = new pg.Client({ connectionString: config.databaseUrl });
+  pgListenerClient = client;
 
   try {
     await client.connect();
     await client.query("LISTEN assessment_changes");
     console.log("Listening on PostgreSQL channel: assessment_changes");
+    pgReconnecting = false;
+    pgReconnectAttempts = 0;
 
     client.on("notification", (msg) => {
       if (msg.channel === "assessment_changes" && msg.payload) {
@@ -215,15 +282,25 @@ async function connectPgListener(): Promise<void> {
 
     client.on("error", (err) => {
       console.error("PG listener error:", err);
-      setTimeout(connectPgListener, 5000);
+      pgReconnecting = false;
+      scheduleReconnect();
     });
 
     client.on("end", () => {
       console.warn("PG listener disconnected, reconnecting...");
-      setTimeout(connectPgListener, 5000);
+      pgReconnecting = false;
+      scheduleReconnect();
     });
   } catch (err) {
     console.error("Failed to connect PG listener:", err);
-    setTimeout(connectPgListener, 5000);
+    pgReconnecting = false;
+    scheduleReconnect();
   }
+}
+
+function scheduleReconnect(): void {
+  const delay = Math.min(1000 * Math.pow(2, pgReconnectAttempts), 30000);
+  pgReconnectAttempts++;
+  console.log(`PG listener reconnecting in ${delay}ms (attempt ${pgReconnectAttempts})...`);
+  setTimeout(connectPgListener, delay);
 }

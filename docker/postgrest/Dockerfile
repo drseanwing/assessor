@@ -1,5 +1,5 @@
 FROM postgrest/postgrest:v12.2.3 AS source
-FROM alpine:3.19
+FROM alpine:3.21
 RUN apk add --no-cache wget
 COPY --from=source /bin/postgrest /bin/postgrest
 EXPOSE 3000

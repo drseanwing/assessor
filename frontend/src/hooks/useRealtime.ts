@@ -76,8 +76,23 @@ export function useRealtime({
     if (!courseId) return
 
     const connect = () => {
+      // Get token from auth store
+      let token: string | null = null
+      try {
+        const stored = localStorage.getItem('redi-auth-storage')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          token = parsed.state?.token || null
+        }
+      } catch {
+        // Ignore parse errors
+      }
+
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
+      const wsUrl = token
+        ? `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`
+        : `${protocol}//${window.location.host}/ws`
+      const ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
         setConnectionStatus('connected')

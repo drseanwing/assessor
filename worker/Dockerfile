@@ -19,6 +19,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+RUN find ./dist -name '*.map' -delete 2>/dev/null || true
 
 RUN addgroup -S worker && adduser -S worker -G worker \
     && chown -R worker:worker /app

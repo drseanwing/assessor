@@ -1,14 +1,27 @@
 import { createServer } from "node:http";
+import { mkdirSync } from "node:fs";
 import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
 import { pool } from "./db.js";
+import { authRouter } from "./routes/auth.js";
 import { syncRouter } from "./routes/sync.js";
 import { reportsRouter } from "./routes/reports.js";
-import { setupWebSocket } from "./websocket.js";
+import { setupWebSocket, getPgListenerClient } from "./websocket.js";
 import { startCronJobs } from "./cron.js";
 import { requireAuth } from "./middleware/auth.js";
+
+// TODO: Migrate to structured logging with pino
+// Current: console.log/error/warn throughout codebase
+// Target: JSON-formatted logs with correlation IDs, log levels, timestamps
+
+// Ensure report directory exists
+try {
+  mkdirSync(config.reportDir, { recursive: true });
+} catch {
+  console.warn(`Could not create report directory: ${config.reportDir}`);
+}
 
 const app = express();
 
@@ -33,6 +46,14 @@ app.get("/api/health", async (_req, res) => {
 });
 
 // Rate limiting
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many login attempts, please try again later" },
+});
+
 const syncLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
@@ -49,29 +70,51 @@ const reportsLimiter = rateLimit({
   message: { success: false, error: "Too many requests, please try again later" },
 });
 
+// Public auth routes (with rate limiting)
+app.use("/api/auth", loginLimiter, authRouter);
+
 // Protected routes
 app.use("/api/sync", requireAuth, syncLimiter, syncRouter);
 app.use("/api/reports", requireAuth, reportsLimiter, reportsRouter);
 
 const server = createServer(app);
 
-setupWebSocket(server);
+const wss = setupWebSocket(server);
 startCronJobs();
 
 server.listen(config.port, () => {
   console.log(`Worker service running on port ${config.port}`);
 });
 
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down...");
-  server.close();
-  await pool.end();
-  process.exit(0);
-});
+async function gracefulShutdown(signal: string) {
+  console.log(`${signal} received, shutting down...`);
 
-process.on("SIGINT", async () => {
-  console.log("SIGINT received, shutting down...");
+  // Close WebSocket server (stops accepting new connections)
+  wss.close(() => {
+    console.log("WebSocket server closed");
+  });
+
+  // Close PG listener
+  const pgClient = getPgListenerClient();
+  if (pgClient) {
+    try {
+      pgClient.removeAllListeners();
+      await pgClient.end();
+      console.log("PG listener closed");
+    } catch {
+      // Ignore
+    }
+  }
+
+  // Close HTTP server
   server.close();
+
+  // Close DB pool
   await pool.end();
+  console.log("DB pool closed");
+
   process.exit(0);
-});
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

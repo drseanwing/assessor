@@ -69,7 +69,7 @@ export default function ComponentTabs({
   }
 
   return (
-    <div className="overflow-x-auto scrollbar-hide">
+    <div className="overflow-x-auto scrollbar-hide" role="tablist" aria-label="Assessment components">
       <div className="flex space-x-2 pb-2">
         {components
           .sort((a, b) => a.component_order - b.component_order)
@@ -80,6 +80,8 @@ export default function ComponentTabs({
             return (
               <button
                 key={component.component_id}
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => onSelectComponent(component.component_id)}
                 className={`
                   flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm

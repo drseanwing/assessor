@@ -3,34 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useRealtime } from '../hooks/useRealtime'
 import { supabase } from '../lib/supabase'
-import type { 
-  Course, 
-  Participant, 
-  TemplateComponent, 
-  TemplateOutcome 
+import type {
+  Course,
+  Participant,
+  TemplateComponent,
+  TemplateOutcome
 } from '../types/database'
 import { ENGAGEMENT_OPTIONS } from '../types/database'
+import type { ComponentStatus, ParticipantAssessmentData } from '../types/assessment'
 
 import DashboardGrid from '../components/dashboard/DashboardGrid'
 import StatsBar from '../components/dashboard/StatsBar'
 import FeedbackPanel from '../components/dashboard/FeedbackPanel'
 import SyncIndicator from '../components/common/SyncIndicator'
-
-interface ParticipantAssessmentData {
-  participant: Participant
-  componentStatuses: Record<string, ComponentStatus>
-  overallFeedback: string | null
-  engagementScore: number | null
-}
-
-interface ComponentStatus {
-  componentId: string
-  status: 'not_started' | 'in_progress' | 'complete' | 'issues'
-  scoredCount: number
-  totalCount: number
-  feedback: string | null
-  isQuickPassed: boolean
-}
 
 interface ComponentFeedback {
   participantName: string
@@ -207,8 +192,8 @@ export default function CourseDashboardPage() {
         assessmentResults.push({
           participant,
           componentStatuses,
-          overallFeedback: overall?.overall_feedback || null,
-          engagementScore: overall?.engagement_score || null
+          overallFeedback: overall?.overall_feedback ?? null,
+          engagementScore: overall?.engagement_score ?? null
         })
       }
 
@@ -219,6 +204,7 @@ export default function CourseDashboardPage() {
 
     } catch (err) {
       console.error('Error loading assessment data:', err)
+      setError('Failed to load assessment data. Please try again.')
     }
   }, [participants, components, outcomes])
 
@@ -418,8 +404,8 @@ export default function CourseDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto"></div>
+        <div className="text-center" role="status" aria-label="Loading">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-redi-teal mx-auto" aria-hidden="true"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -437,12 +423,23 @@ export default function CourseDashboardPage() {
           </div>
           <h2 className="text-xl font-bold text-center text-redi-navy mb-2">Error</h2>
           <p className="text-gray-600 text-center mb-4">{error}</p>
-          <button
-            onClick={handleBack}
-            className="w-full bg-redi-coral text-white py-2 px-4 rounded-lg hover:bg-redi-coral-dark"
-          >
-            Go Back
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setError('')
+                loadCourseData()
+              }}
+              className="flex-1 bg-redi-teal text-white py-2 px-4 rounded-lg hover:bg-redi-teal/90"
+            >
+              Retry
+            </button>
+            <button
+              onClick={handleBack}
+              className="flex-1 bg-redi-coral text-white py-2 px-4 rounded-lg hover:bg-redi-coral-dark"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -498,8 +495,9 @@ export default function CourseDashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Filter */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Filter:</span>
+            <label htmlFor="filter-select" className="text-sm text-gray-600">Filter:</label>
             <select
+              id="filter-select"
               value={filter}
               onChange={(e) => setFilter(e.target.value as typeof filter)}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-redi-teal"
@@ -509,11 +507,12 @@ export default function CourseDashboardPage() {
               <option value="complete">Complete</option>
             </select>
           </div>
-          
+
           {/* Sort */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Sort by:</span>
+            <label htmlFor="sort-select" className="text-sm text-gray-600">Sort by:</label>
             <select
+              id="sort-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-redi-teal"

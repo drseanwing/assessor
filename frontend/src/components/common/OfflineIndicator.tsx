@@ -16,10 +16,11 @@ export default function OfflineIndicator({
   }
 
   return (
-    <div 
+    <div
+      role="alert"
       className={`
-        fixed bottom-4 left-4 z-50 
-        flex items-center gap-2 
+        fixed bottom-4 left-4 z-50
+        flex items-center gap-2
         px-4 py-2 rounded-lg shadow-lg
         ${isOnline ? 'bg-blue-600' : 'bg-orange-600'}
         text-white text-sm font-medium

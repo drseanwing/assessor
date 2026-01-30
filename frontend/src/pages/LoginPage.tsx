@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { loginWithPin, fetchActiveAssessors } from '../lib/auth'
-import type { Assessor } from '../types/database'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { setAssessor, setSessionExpiry, isAuthenticated } = useAuthStore()
+  const { setAssessor, setToken, setSessionExpiry, isAuthenticated } = useAuthStore()
 
-  const [assessors, setAssessors] = useState<Assessor[]>([])
+  const [assessors, setAssessors] = useState<Array<{ assessor_id: string; name: string }>>([])
   const [selectedAssessor, setSelectedAssessor] = useState<string>('')
   const [pin, setPin] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
@@ -61,10 +60,11 @@ export default function LoginPage() {
       pin
     })
 
-    if (result.success && result.assessor) {
+    if (result.success && result.assessor && result.token) {
       // Set session expiry (default: 12 hours)
       const expiryTime = Date.now() + (12 * 60 * 60 * 1000)
       setAssessor(result.assessor)
+      setToken(result.token)
       setSessionExpiry(expiryTime)
 
       // Navigate to courses
@@ -78,7 +78,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-redi-light-teal/20 to-redi-navy/10 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-redi-light-teal/20 to-redi-navy/10 px-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -164,11 +164,25 @@ export default function LoginPage() {
           </form>
 
           {/* Development Note */}
-          <div className="mt-6 p-4 bg-redi-yellow/20 border border-redi-yellow/40 rounded-lg">
-            <p className="text-xs text-redi-navy">
-              <strong>Development Mode:</strong> Any 4-digit PIN will work for demo purposes.
-            </p>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="mt-6 p-4 bg-redi-yellow/20 border border-redi-yellow/40 rounded-lg">
+              <p className="text-xs text-redi-navy">
+                <strong>Development Mode:</strong> Any 4-digit PIN will work for demo purposes.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Privacy Notice */}
+        <div className="mt-4 px-2">
+          <p className="text-xs text-redi-navy/50 leading-relaxed">
+            This system processes personal and health-related education data in accordance with
+            the <em>Information Privacy Act 2009</em> (Qld) and Queensland Health information
+            security policies. Data entered is used solely for competency assessment purposes
+            and is stored securely within Queensland Health infrastructure. By logging in, you
+            acknowledge your responsibility to handle participant data in accordance with
+            Queensland Health privacy obligations.
+          </p>
         </div>
 
         {/* Footer */}
@@ -176,6 +190,6 @@ export default function LoginPage() {
           <p>Queensland Health - Resuscitation Education Initiative</p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

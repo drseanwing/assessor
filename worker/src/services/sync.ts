@@ -6,6 +6,7 @@ import {
   type RediParticipant,
 } from "./redi-api.js";
 
+let syncInProgress = false;
 let lastSyncTime: Date | null = null;
 let lastSyncStatus: "idle" | "running" | "success" | "error" = "idle";
 let lastSyncError: string | null = null;
@@ -234,10 +235,16 @@ export async function syncAll(): Promise<{
   courses: { synced: number; errors: string[] };
   participants: { synced: number; errors: string[] };
 }> {
-  lastSyncStatus = "running";
-  lastSyncError = null;
+  if (syncInProgress) {
+    console.warn("[SYNC] Sync already in progress, skipping");
+    return { courses: { synced: 0, errors: [] }, participants: { synced: 0, errors: [] } };
+  }
+  syncInProgress = true;
 
   try {
+    lastSyncStatus = "running";
+    lastSyncError = null;
+
     const courseResult = await syncCoursesFromRedi();
 
     const activeCourses = await query<{
@@ -283,5 +290,7 @@ export async function syncAll(): Promise<{
     lastSyncError =
       err instanceof Error ? err.message : String(err);
     throw err;
+  } finally {
+    syncInProgress = false;
   }
 }

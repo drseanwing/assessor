@@ -1,10 +1,12 @@
 import { create } from 'zustand'
-import type { 
-  Participant, 
-  TemplateComponent, 
-  TemplateOutcome, 
+import type {
+  Participant,
+  TemplateComponent,
+  TemplateOutcome,
   BondyScore,
-  BinaryScore
+  BinaryScore,
+  OverallOutcome,
+  RecommendedAction
 } from '../types/database'
 import { supabase } from '../lib/supabase'
 
@@ -38,6 +40,9 @@ interface AssessmentState {
     overallId: string | null
     feedback: string
     engagementScore: number | null
+    teamLeaderOutcome: OverallOutcome | null
+    teamMemberOutcome: OverallOutcome | null
+    recommendedAction: RecommendedAction | null
     isDirty: boolean
   }
   
@@ -66,6 +71,9 @@ interface AssessmentState {
   setComponentFeedback: (componentId: string, feedback: string) => void
   setOverallFeedback: (feedback: string) => void
   setEngagementScore: (score: number) => void
+  setTeamLeaderOutcome: (outcome: OverallOutcome | null) => void
+  setTeamMemberOutcome: (outcome: OverallOutcome | null) => void
+  setRecommendedAction: (action: RecommendedAction | null) => void
   
   // Save to database
   saveChanges: () => Promise<void>
@@ -84,6 +92,9 @@ const initialState = {
     overallId: null,
     feedback: '',
     engagementScore: null,
+    teamLeaderOutcome: null,
+    teamMemberOutcome: null,
+    recommendedAction: null,
     isDirty: false
   },
   activeComponentId: null,
@@ -115,41 +126,54 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   loadAssessments: async () => {
     const { participant, components } = get()
     if (!participant) return
-    
+
     try {
-      // Load component assessments
+      // Load component assessments (single query)
       const { data: assessments } = await supabase
         .from('component_assessments')
         .select('*')
         .eq('participant_id', participant.participant_id)
-      
-      // Load outcome scores for each assessment
+
+      // Batch load ALL outcome scores in a single query
+      const assessmentIds = (assessments || []).map(a => a.assessment_id)
+      let allScores: Array<{ assessment_id: string; outcome_id: string; bondy_score: string | null; binary_score: string | null }> = []
+
+      if (assessmentIds.length > 0) {
+        const { data: scoresData } = await supabase
+          .from('outcome_scores')
+          .select('*')
+          .in('assessment_id', assessmentIds)
+        allScores = scoresData || []
+      }
+
+      // Build scores map: assessment_id -> scores[]
+      const scoresByAssessment = new Map<string, typeof allScores>()
+      for (const score of allScores) {
+        const existing = scoresByAssessment.get(score.assessment_id) || []
+        existing.push(score)
+        scoresByAssessment.set(score.assessment_id, existing)
+      }
+
+      // Build component assessments in memory
       const componentAssessments: Record<string, LocalComponentAssessment> = {}
-      
+
       for (const component of components) {
         const existingAssessment = assessments?.find(a => a.component_id === component.component_id)
-        
+
         const scores: Record<string, LocalOutcomeScore> = {}
-        
+
         if (existingAssessment) {
-          // Load scores for this assessment
-          const { data: scoreData } = await supabase
-            .from('outcome_scores')
-            .select('*')
-            .eq('assessment_id', existingAssessment.assessment_id)
-          
-          if (scoreData) {
-            for (const score of scoreData) {
-              scores[score.outcome_id] = {
-                outcomeId: score.outcome_id,
-                bondyScore: score.bondy_score,
-                binaryScore: score.binary_score,
-                isDirty: false
-              }
+          const scoreData = scoresByAssessment.get(existingAssessment.assessment_id) || []
+          for (const score of scoreData) {
+            scores[score.outcome_id] = {
+              outcomeId: score.outcome_id,
+              bondyScore: score.bondy_score,
+              binaryScore: score.binary_score,
+              isDirty: false
             }
           }
         }
-        
+
         componentAssessments[component.component_id] = {
           componentId: component.component_id,
           assessmentId: existingAssessment?.assessment_id || null,
@@ -159,25 +183,29 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
           scores
         }
       }
-      
+
       // Load overall assessment
       const { data: overall } = await supabase
         .from('overall_assessments')
         .select('*')
         .eq('participant_id', participant.participant_id)
         .maybeSingle()
-      
-      set({ 
+
+      set({
         componentAssessments,
         overallAssessment: {
-          overallId: overall?.overall_id || null,
-          feedback: overall?.overall_feedback || '',
-          engagementScore: overall?.engagement_score || null,
+          overallId: overall?.overall_id ?? null,
+          feedback: overall?.overall_feedback ?? '',
+          engagementScore: overall?.engagement_score ?? null,
+          teamLeaderOutcome: overall?.team_leader_outcome ?? null,
+          teamMemberOutcome: overall?.team_member_outcome ?? null,
+          recommendedAction: overall?.recommended_action ?? null,
           isDirty: false
         }
       })
     } catch (error) {
       console.error('Error loading assessments:', error)
+      set({ saveStatus: 'error' })
     }
   },
   
@@ -350,14 +378,48 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
         isDirty: true
       }
     }))
-    
+
     // Trigger debounced save
+    get().saveChanges()
+  },
+
+  setTeamLeaderOutcome: (outcome) => {
+    set((state) => ({
+      overallAssessment: {
+        ...state.overallAssessment,
+        teamLeaderOutcome: outcome,
+        isDirty: true
+      }
+    }))
+    get().saveChanges()
+  },
+
+  setTeamMemberOutcome: (outcome) => {
+    set((state) => ({
+      overallAssessment: {
+        ...state.overallAssessment,
+        teamMemberOutcome: outcome,
+        isDirty: true
+      }
+    }))
+    get().saveChanges()
+  },
+
+  setRecommendedAction: (action) => {
+    set((state) => ({
+      overallAssessment: {
+        ...state.overallAssessment,
+        recommendedAction: action,
+        isDirty: true
+      }
+    }))
     get().saveChanges()
   },
   
   saveChanges: (() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
-    
+    let saveInProgress = false
+
     // Helper to get current assessor from localStorage
     const getCurrentAssessorId = (): string | null => {
       try {
@@ -371,21 +433,24 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       }
       return null
     }
-    
+
     return async () => {
       // Debounce saves
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
-      
+
       timeoutId = setTimeout(async () => {
+        if (saveInProgress) return
+
         const { participant, componentAssessments, overallAssessment } = get()
         if (!participant) return
-        
+
         const assessorId = getCurrentAssessorId()
-        
+
+        saveInProgress = true
         set({ saveStatus: 'saving' })
-        
+
         try {
           // Save component assessments
           for (const [componentId, assessment] of Object.entries(componentAssessments)) {
@@ -482,6 +547,9 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   participant_id: participant.participant_id,
                   overall_feedback: overallAssessment.feedback,
                   engagement_score: overallAssessment.engagementScore,
+                  team_leader_outcome: overallAssessment.teamLeaderOutcome,
+                  team_member_outcome: overallAssessment.teamMemberOutcome,
+                  recommended_action: overallAssessment.recommendedAction,
                   last_modified_by: assessorId
                 })
                 .select()
@@ -502,6 +570,9 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 .update({
                   overall_feedback: overallAssessment.feedback,
                   engagement_score: overallAssessment.engagementScore,
+                  team_leader_outcome: overallAssessment.teamLeaderOutcome,
+                  team_member_outcome: overallAssessment.teamMemberOutcome,
+                  recommended_action: overallAssessment.recommendedAction,
                   last_modified_by: assessorId,
                   last_modified_at: new Date().toISOString()
                 })
@@ -519,15 +590,17 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
           }
           
           set({ saveStatus: 'saved', lastSaved: new Date() })
-          
+
           // Reset status after delay
           setTimeout(() => {
             set({ saveStatus: 'idle' })
           }, 2000)
-          
+
         } catch (error) {
           console.error('Error saving assessments:', error)
           set({ saveStatus: 'error' })
+        } finally {
+          saveInProgress = false
         }
       }, 1000) // 1 second debounce
     }

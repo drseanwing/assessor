@@ -12,7 +12,7 @@ interface CourseInfo {
 
 interface ParticipantInfo {
   participant_id: string;
-  candidate_name: string;
+  candidate_name: string; // Database column name (not changed)
   payroll_number: string | null;
   designation: string | null;
   work_area: string | null;
@@ -71,6 +71,15 @@ const ENGAGEMENT_LABELS: Record<number, { emoji: string; label: string }> = {
   2: { emoji: "Poor", label: "Poor engagement" },
   1: { emoji: "Very Poor", label: "Very poor engagement" },
 };
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 async function fetchReportData(courseId: string): Promise<ReportData> {
   const courseResult = await query<CourseInfo>(
@@ -184,7 +193,7 @@ function generateMarkdown(data: ReportData): string {
   lines.push(``);
   lines.push(`## Summary`);
   lines.push(`- Total Participants: ${participants.length}`);
-  lines.push(`- Completed All Stations: ${completedAll}`);
+  lines.push(`- Completed All Components: ${completedAll}`);
   lines.push(`- With Issues: ${withIssues}`);
   lines.push(``);
   lines.push(`## Participant Results`);
@@ -289,7 +298,7 @@ function generateCsv(data: ReportData): string {
   const { participants, outcomeScores, overalls, assessments } = data;
 
   const header = [
-    "Participant",
+    "Participant Name",
     "Payroll",
     "Designation",
     "WorkArea",
@@ -452,11 +461,11 @@ export async function listReports(): Promise<string[]> {
 
 export function markdownToHtml(markdown: string): string {
   return markdown
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^- (.+)$/gm, "<li>$1</li>")
+    .replace(/^# (.+)$/gm, (_match, content) => `<h1>${escapeHtml(content)}</h1>`)
+    .replace(/^## (.+)$/gm, (_match, content) => `<h2>${escapeHtml(content)}</h2>`)
+    .replace(/^### (.+)$/gm, (_match, content) => `<h3>${escapeHtml(content)}</h3>`)
+    .replace(/\*\*(.+?)\*\*/g, (_match, content) => `<strong>${escapeHtml(content)}</strong>`)
+    .replace(/^- (.+)$/gm, (_match, content) => `<li>${escapeHtml(content)}</li>`)
     .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
     .replace(
       /\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g,
@@ -466,7 +475,7 @@ export function markdownToHtml(markdown: string): string {
           .map((h: string) => h.trim())
           .filter(Boolean);
         const headerHtml = headers
-          .map((h: string) => `<th>${h}</th>`)
+          .map((h: string) => `<th>${escapeHtml(h)}</th>`)
           .join("");
 
         const rows = bodyRows
@@ -477,7 +486,7 @@ export function markdownToHtml(markdown: string): string {
               .split("|")
               .map((c: string) => c.trim())
               .filter(Boolean);
-            return `<tr>${cells.map((c: string) => `<td>${c}</td>`).join("")}</tr>`;
+            return `<tr>${cells.map((c: string) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`;
           })
           .join("");
 
@@ -487,6 +496,6 @@ export function markdownToHtml(markdown: string): string {
     .replace(/^---$/gm, "<hr>")
     .replace(/\n\n/g, "<br><br>")
     .replace(/^(?!<[hultdbo])/gm, (line) =>
-      line.trim() ? `<p>${line}</p>` : ""
+      line.trim() ? `<p>${escapeHtml(line)}</p>` : ""
     );
 }
