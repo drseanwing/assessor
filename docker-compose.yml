@@ -10,7 +10,7 @@
 #   db       - PostgreSQL 16 (port 5432)
 #   rest     - PostgREST API (port 3000, proxied via nginx)
 #   worker   - Node.js backend for REdI sync/reports/email (port 5000, proxied via nginx)
-#   frontend - nginx serving React SPA + reverse proxy (port 80)
+#   frontend - nginx serving React SPA + reverse proxy (port 8080)
 
 services:
   db:
@@ -36,7 +36,7 @@ services:
       - "wal_level=logical"
 
   rest:
-    image: postgrest/postgrest:v12.2.3
+    build: ./docker/postgrest
     restart: unless-stopped
     depends_on:
       db:
@@ -51,10 +51,11 @@ services:
       PGRST_DB_POOL_TIMEOUT: 10
     # PostgREST is only reachable within Docker network (proxied via nginx at /rest/v1/)
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:3000/ || exit 1"]
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:3000/"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   worker:
     build: ./worker
@@ -103,7 +104,7 @@ services:
       worker:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "8080:80"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider --quiet http://localhost:80/ || exit 1"]
       interval: 10s

@@ -29,7 +29,7 @@ The fastest way to get started is using Docker Compose:
 
 ```bash
 # Copy environment template
-cp .env.example .env
+cp .env.docker .env
 
 # Start all services (PostgreSQL, API, Frontend, etc.)
 docker compose up -d
@@ -41,10 +41,7 @@ docker compose ps
 docker compose logs -f
 ```
 
-The application will be available at:
-- **Frontend**: http://localhost:7385
-- **Database UI**: http://localhost:7389
-- **API Gateway**: http://localhost:7387
+The application will be available at http://localhost:8080
 
 See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
 

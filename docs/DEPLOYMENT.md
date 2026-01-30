@@ -190,10 +190,10 @@ docker build \
 #### 2. Run Container
 
 ```bash
-docker run -p 80:80 redi-assessment:latest
+docker run -p 8080:80 redi-assessment:latest
 ```
 
-Application is now available at `http://localhost`.
+Application is now available at `http://localhost:8080`.
 
 #### 3. Configure for HTTPS
 
@@ -210,7 +210,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://localhost:80;
+        proxy_pass http://localhost:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -368,7 +368,7 @@ vercel rollback
 
 ```bash
 # Roll back to previous image
-docker run -p 80:80 redi-assessment:previous-tag
+docker run -p 8080:80 redi-assessment:previous-tag
 ```
 
 ### Manual Deployment
