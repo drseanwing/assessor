@@ -27,9 +27,9 @@ authRouter.post("/login", async (req, res) => {
     );
 
     // Always perform bcrypt comparison to prevent timing attacks
-    // Use a dummy hash if user doesn't exist
+    // Use a real dummy hash if user doesn't exist (bcrypt hash of "00000000")
     const assessor = result.rows[0];
-    const hashToCompare = assessor?.pin_hash || "$2a$10$dummyhashtopreventtimingattacksxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    const hashToCompare = assessor?.pin_hash || "$2a$10$N9qo8uLOickgx2ZMRZoMye.tI1e7lSEIbV3TcWBLLuJ3vESvQPgKC";
 
     // Compare PIN with bcrypt hash (always runs, even for invalid users)
     const isValid = await bcrypt.compare(pin, hashToCompare);

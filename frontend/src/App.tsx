@@ -9,6 +9,7 @@ const CourseListPage = lazy(() => import('./pages/CourseListPage'))
 const ParticipantListPage = lazy(() => import('./pages/ParticipantListPage'))
 const AssessmentPage = lazy(() => import('./pages/AssessmentPage'))
 const CourseDashboardPage = lazy(() => import('./pages/CourseDashboardPage'))
+const ParticipantFeedbackPage = lazy(() => import('./pages/ParticipantFeedbackPage'))
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AssessmentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/participant/:participantId/feedback"
+              element={
+                <ProtectedRoute>
+                  <ParticipantFeedbackPage />
                 </ProtectedRoute>
               }
             />
