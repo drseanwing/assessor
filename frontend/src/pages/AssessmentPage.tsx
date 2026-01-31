@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useAssessmentStore } from '../stores/assessmentStore'
 import { useRealtime } from '../hooks/useRealtime'
 import { supabase } from '../lib/supabase'
-import type { Participant, TemplateComponent, TemplateOutcome, RecommendedAction } from '../types/database'
+import type { Participant, TemplateComponent, TemplateOutcome } from '../types/database'
 
 import ComponentTabs from '../components/assessment/ComponentTabs'
 import OutcomeRow from '../components/assessment/OutcomeRow'
@@ -42,11 +42,7 @@ export default function AssessmentPage() {
     setBinaryScore,
     applyQuickPass,
     setComponentFeedback,
-    setOverallFeedback,
     setEngagementScore,
-    setTeamLeaderOutcome,
-    setTeamMemberOutcome,
-    setRecommendedAction,
     getComponentStatus,
     reset
   } = useAssessmentStore()
@@ -333,107 +329,20 @@ export default function AssessmentPage() {
           </>
         )}
         
-        {/* Overall Assessment Section */}
+        {/* Engagement Level */}
         <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-redi-navy mb-4">Overall Assessment</h2>
-          
-          {/* Engagement Score */}
+          <h2 className="text-lg font-semibold text-redi-navy mb-4">Engagement Level</h2>
+
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Engagement Level
-            </label>
             <EngagementSelector
               value={overallAssessment.engagementScore}
               onChange={setEngagementScore}
             />
           </div>
 
-          {/* Outcome Selectors */}
-          {(participant?.assessment_role === 'TEAM_LEADER' || participant?.assessment_role === 'BOTH') && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Team Leader Outcome
-              </label>
-              <div className="flex gap-3">
-                {(['PASS', 'UNSUCCESSFUL_ATTEMPT'] as const).map((outcome) => (
-                  <button
-                    key={outcome}
-                    type="button"
-                    onClick={() => setTeamLeaderOutcome(
-                      overallAssessment.teamLeaderOutcome === outcome ? null : outcome
-                    )}
-                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
-                      overallAssessment.teamLeaderOutcome === outcome
-                        ? outcome === 'PASS'
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
-                    }`}
-                  >
-                    {outcome === 'PASS' ? 'Pass' : 'Unsuccessful Attempt'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(participant?.assessment_role === 'TEAM_MEMBER' || participant?.assessment_role === 'BOTH') && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Team Member Outcome
-              </label>
-              <div className="flex gap-3">
-                {(['PASS', 'UNSUCCESSFUL_ATTEMPT'] as const).map((outcome) => (
-                  <button
-                    key={outcome}
-                    type="button"
-                    onClick={() => setTeamMemberOutcome(
-                      overallAssessment.teamMemberOutcome === outcome ? null : outcome
-                    )}
-                    className={`flex-1 py-2 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
-                      overallAssessment.teamMemberOutcome === outcome
-                        ? outcome === 'PASS'
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
-                    }`}
-                  >
-                    {outcome === 'PASS' ? 'Pass' : 'Unsuccessful Attempt'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recommended Action - only show if any outcome is UNSUCCESSFUL_ATTEMPT */}
-          {(overallAssessment.teamLeaderOutcome === 'UNSUCCESSFUL_ATTEMPT' || overallAssessment.teamMemberOutcome === 'UNSUCCESSFUL_ATTEMPT') && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Recommended Action
-              </label>
-              <select
-                value={overallAssessment.recommendedAction || ''}
-                onChange={(e) => setRecommendedAction(
-                  e.target.value ? e.target.value as RecommendedAction : null
-                )}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
-              >
-                <option value="">Select recommended action...</option>
-                <option value="RESTART_LEARNING">Restart Learning</option>
-                <option value="REATTEMPT_COURSE">Reattempt Course</option>
-                <option value="REASSESSMENT_ONLY">Reassessment Only</option>
-                <option value="REFER_EDUCATOR">Refer to Educator</option>
-              </select>
-            </div>
-          )}
-
-          {/* Overall Feedback */}
-          <FeedbackInput
-            value={overallAssessment.feedback}
-            onChange={setOverallFeedback}
-            label="Overall Feedback"
-            placeholder="Enter overall feedback for this participant..."
-          />
+          <p className="text-sm text-gray-600 italic">
+            Overall assessment and feedback can be viewed on the Feedback Report page after all components are completed.
+          </p>
         </div>
       </main>
       
