@@ -14,6 +14,9 @@ import { startCronJobs } from "./cron.js";
 
 const app = express();
 
+// Trust the nginx reverse proxy for correct client IP in rate limiting
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.CORS_ORIGIN || false,
