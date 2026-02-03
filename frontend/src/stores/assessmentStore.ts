@@ -1,12 +1,13 @@
 import { create } from 'zustand'
-import type { 
-  Participant, 
-  TemplateComponent, 
-  TemplateOutcome, 
+import type {
+  Participant,
+  TemplateComponent,
+  TemplateOutcome,
   BondyScore,
   BinaryScore
 } from '../types/database'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from './authStore'
 
 // Type for local score tracking before save
 interface LocalOutcomeScore {
@@ -115,41 +116,47 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   loadAssessments: async () => {
     const { participant, components } = get()
     if (!participant) return
-    
+
     try {
       // Load component assessments
       const { data: assessments } = await supabase
         .from('component_assessments')
         .select('*')
         .eq('participant_id', participant.participant_id)
-      
-      // Load outcome scores for each assessment
+
+      // Batch-load all outcome scores in a single query
+      const assessmentIds = (assessments || []).map(a => a.assessment_id)
+      let allScores: Record<string, unknown>[] = []
+      if (assessmentIds.length > 0) {
+        const { data: scoreData } = await supabase
+          .from('outcome_scores')
+          .select('*')
+          .in('assessment_id', assessmentIds)
+        allScores = scoreData || []
+      }
+
+      // Build component assessments with scores grouped by assessment_id
       const componentAssessments: Record<string, LocalComponentAssessment> = {}
-      
+
       for (const component of components) {
         const existingAssessment = assessments?.find(a => a.component_id === component.component_id)
-        
         const scores: Record<string, LocalOutcomeScore> = {}
-        
+
         if (existingAssessment) {
-          // Load scores for this assessment
-          const { data: scoreData } = await supabase
-            .from('outcome_scores')
-            .select('*')
-            .eq('assessment_id', existingAssessment.assessment_id)
-          
-          if (scoreData) {
-            for (const score of scoreData) {
-              scores[score.outcome_id] = {
-                outcomeId: score.outcome_id,
-                bondyScore: score.bondy_score,
-                binaryScore: score.binary_score,
-                isDirty: false
-              }
+          const assessmentScores = allScores.filter(
+            (s: Record<string, unknown>) => s.assessment_id === existingAssessment.assessment_id
+          )
+          for (const score of assessmentScores) {
+            const s = score as Record<string, unknown>
+            scores[s.outcome_id as string] = {
+              outcomeId: s.outcome_id as string,
+              bondyScore: s.bondy_score as BondyScore | null,
+              binaryScore: s.binary_score as BinaryScore | null,
+              isDirty: false
             }
           }
         }
-        
+
         componentAssessments[component.component_id] = {
           componentId: component.component_id,
           assessmentId: existingAssessment?.assessment_id || null,
@@ -159,14 +166,14 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
           scores
         }
       }
-      
+
       // Load overall assessment
       const { data: overall } = await supabase
         .from('overall_assessments')
         .select('*')
         .eq('participant_id', participant.participant_id)
         .maybeSingle()
-      
+
       set({
         componentAssessments,
         overallAssessment: {
@@ -357,32 +364,18 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   
   saveChanges: (() => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null
-    
-    // Helper to get current assessor from localStorage
-    const getCurrentAssessorId = (): string | null => {
-      try {
-        const stored = localStorage.getItem('redi-auth-storage')
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          return parsed.state?.assessor?.assessor_id || null
-        }
-      } catch {
-        // Ignore parse errors
-      }
-      return null
-    }
-    
+
     return async () => {
       // Debounce saves
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
-      
+
       timeoutId = setTimeout(async () => {
         const { participant, componentAssessments, overallAssessment } = get()
         if (!participant) return
-        
-        const assessorId = getCurrentAssessorId()
+
+        const assessorId = useAuthStore.getState().assessor?.assessor_id || null
         
         set({ saveStatus: 'saving' })
         

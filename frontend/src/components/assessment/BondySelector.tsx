@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { BONDY_SCALE_OPTIONS, type BondyScore } from '../../types/database'
 
 interface BondySelectorProps {
@@ -6,7 +7,7 @@ interface BondySelectorProps {
   disabled?: boolean
 }
 
-export default function BondySelector({ value, onChange, disabled = false }: BondySelectorProps) {
+export default memo(function BondySelector({ value, onChange, disabled = false }: BondySelectorProps) {
   const getScoreColor = (score: BondyScore, isSelected: boolean) => {
     if (!isSelected) return 'bg-gray-100 text-gray-600 hover:bg-gray-200'
     
@@ -53,4 +54,4 @@ export default function BondySelector({ value, onChange, disabled = false }: Bon
       })}
     </div>
   )
-}
+})

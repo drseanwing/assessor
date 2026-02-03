@@ -43,10 +43,11 @@ export function setupWebSocket(server: HttpServer): WebSocketServer {
 
     ws.on("close", () => {
       const state = clients.get(ws);
-      if (state?.presence) {
-        broadcastPresenceLeave(ws, state.presence);
-      }
+      const courseId = state?.subscription?.courseId;
       clients.delete(ws);
+      if (courseId) {
+        broadcastPresenceState(courseId);
+      }
       console.log("WebSocket client disconnected");
     });
 
@@ -62,15 +63,32 @@ export function setupWebSocket(server: HttpServer): WebSocketServer {
   return wss;
 }
 
+function isString(v: unknown): v is string {
+  return typeof v === "string" && v.length > 0;
+}
+
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((item) => typeof item === "string");
+}
+
 function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): void {
   const state = clients.get(ws);
   if (!state) return;
 
+  if (!isString(message.type)) {
+    ws.send(JSON.stringify({ type: "error", error: "Missing message type" }));
+    return;
+  }
+
   switch (message.type) {
     case "subscribe": {
+      if (!isString(message.courseId)) {
+        ws.send(JSON.stringify({ type: "error", error: "courseId is required" }));
+        return;
+      }
       state.subscription = {
-        courseId: message.courseId as string,
-        participantIds: (message.participantIds as string[]) || [],
+        courseId: message.courseId,
+        participantIds: isStringArray(message.participantIds) ? message.participantIds : [],
       };
       ws.send(
         JSON.stringify({
@@ -78,20 +96,22 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
           courseId: state.subscription.courseId,
         })
       );
-
       sendCurrentPresence(ws, state.subscription.courseId);
       break;
     }
 
     case "presence": {
+      if (!isString(message.assessorId) || !isString(message.assessorName) || !isString(message.participantId)) {
+        ws.send(JSON.stringify({ type: "error", error: "assessorId, assessorName, and participantId are required" }));
+        return;
+      }
       state.presence = {
-        assessorId: message.assessorId as string,
-        assessorName: message.assessorName as string,
-        participantId: message.participantId as string,
-        componentId: (message.componentId as string | null) || null,
+        assessorId: message.assessorId,
+        assessorName: message.assessorName,
+        participantId: message.participantId,
+        componentId: isString(message.componentId) ? message.componentId : null,
         lastSeen: new Date().toISOString(),
       };
-
       broadcastPresenceState(state.subscription?.courseId || "");
       break;
     }
@@ -102,7 +122,7 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
     }
 
     default: {
-      console.warn("Unknown WebSocket message type:", message.type);
+      ws.send(JSON.stringify({ type: "error", error: "Unknown message type" }));
     }
   }
 }
@@ -154,9 +174,12 @@ function broadcastAssessmentChange(payload: string): void {
   const record = parsed.record as Record<string, unknown> | undefined;
   const participantId = record?.participant_id as string | undefined;
 
+  // Send only metadata, not the full record (security: avoid leaking data over WebSocket)
   const message = JSON.stringify({
     type: "change",
-    ...parsed,
+    table: parsed.table,
+    action: parsed.action,
+    participantId: participantId || null,
   });
 
   for (const [ws, state] of clients.entries()) {
@@ -173,11 +196,33 @@ function broadcastAssessmentChange(payload: string): void {
   }
 }
 
+let pgReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let pgReconnectDelay = 5000;
+const PG_MAX_RECONNECT_DELAY = 300000; // 5 minutes
+
 async function connectPgListener(): Promise<void> {
+  if (pgReconnectTimer) {
+    clearTimeout(pgReconnectTimer);
+    pgReconnectTimer = null;
+  }
+
   const client = new pg.Client({ connectionString: config.databaseUrl });
+  let reconnecting = false;
+
+  function scheduleReconnect(): void {
+    if (reconnecting) return;
+    reconnecting = true;
+    try { client.end().catch(() => {}); } catch {}
+    pgReconnectTimer = setTimeout(() => {
+      pgReconnectTimer = null;
+      connectPgListener();
+    }, pgReconnectDelay);
+    pgReconnectDelay = Math.min(pgReconnectDelay * 2, PG_MAX_RECONNECT_DELAY);
+  }
 
   try {
     await client.connect();
+    pgReconnectDelay = 5000; // Reset backoff on successful connect
     await client.query("LISTEN assessment_changes");
     console.log("Listening on PostgreSQL channel: assessment_changes");
 
@@ -189,15 +234,15 @@ async function connectPgListener(): Promise<void> {
 
     client.on("error", (err) => {
       console.error("PG listener error:", err);
-      setTimeout(connectPgListener, 5000);
+      scheduleReconnect();
     });
 
     client.on("end", () => {
       console.warn("PG listener disconnected, reconnecting...");
-      setTimeout(connectPgListener, 5000);
+      scheduleReconnect();
     });
   } catch (err) {
     console.error("Failed to connect PG listener:", err);
-    setTimeout(connectPgListener, 5000);
+    scheduleReconnect();
   }
 }

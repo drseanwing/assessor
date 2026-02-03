@@ -230,22 +230,14 @@ export default function CourseDashboardPage() {
     onScoreChange: loadAssessmentData
   })
 
-  // Initial data load
-  useEffect(() => {
-    if (courseId) {
-      loadCourseData()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId])
-
   // Reload assessment data when participants or components change
   useEffect(() => {
     if (participants.length > 0 && components.length > 0) {
       loadAssessmentData()
     }
   }, [participants, components, loadAssessmentData])
-  
-  const loadCourseData = async () => {
+
+  const loadCourseData = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -307,8 +299,15 @@ export default function CourseDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
-  
+  }, [courseId])
+
+  // Initial data load
+  useEffect(() => {
+    if (courseId) {
+      loadCourseData()
+    }
+  }, [courseId, loadCourseData])
+
   const handleParticipantClick = (participantId: string) => {
     navigate(`/course/${courseId}/participant/${participantId}/assess`)
   }

@@ -185,18 +185,19 @@ ON CONFLICT (outcome_id) DO NOTHING;
 -- SAMPLE ASSESSORS (for development/testing)
 -- ============================================================================
 
--- Note: PIN hashes would normally be generated with bcrypt.
--- For development, using simple placeholder hashes.
--- Production should use proper password hashing.
+-- Note: PIN hashes generated with bcrypt (bcryptjs, 10 rounds)
+-- Test PINs: 1234, 5678, 9012, 3456
 
 INSERT INTO assessors (assessor_id, name, email, pin_hash, is_active)
 VALUES
   ('00000000-0000-0000-0000-000000000011', 'Dr. Sarah Chen', 'sarah.chen@health.qld.gov.au',
-   '$2a$10$placeholder_hash_1234', TRUE),
+   '$2b$10$.y0nXkQawkhY2NI5p3dLX.TPy.8lG4572TVs6/R9YpIPScEi3aCOu', TRUE),
   ('00000000-0000-0000-0000-000000000012', 'Dr. Michael O''Connor', 'michael.oconnor@health.qld.gov.au',
-   '$2a$10$placeholder_hash_5678', TRUE),
+   '$2b$10$hNTP4mixatqXPhlRArWq7Or.MdcV7bbD8uvCKLun/jLwrr5cC.HoW', TRUE),
   ('00000000-0000-0000-0000-000000000013', 'Nurse Emma Wilson', 'emma.wilson@health.qld.gov.au',
-   '$2a$10$placeholder_hash_9012', TRUE)
+   '$2b$10$3DnygpxtCgmOPPs91PMcA.SuX6B7QS4nYtbykZqS6QELEQYnVEQwa', TRUE),
+  ('00000000-0000-0000-0000-000000000014', 'Dr. James Rodriguez', 'james.rodriguez@health.qld.gov.au',
+   '$2b$10$hbpxux93Gn7vH0sFeJOLzu4ya82VVmg9J3sk.k04NxOvOOXW6bmSG', TRUE)
 ON CONFLICT (assessor_id) DO NOTHING;
 
 -- ============================================================================

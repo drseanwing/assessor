@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useAssessmentStore } from '../stores/assessmentStore'
@@ -152,6 +152,10 @@ export default function AssessmentPage() {
   
   const activeOutcomes = activeComponentId ? outcomes[activeComponentId] || [] : []
   const activeAssessment = activeComponentId ? componentAssessments[activeComponentId] : null
+  const sortedOutcomes = useMemo(
+    () => [...activeOutcomes].sort((a, b) => a.outcome_order - b.outcome_order),
+    [activeOutcomes]
+  )
   
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -301,9 +305,7 @@ export default function AssessmentPage() {
             
             {/* Outcomes List */}
             <div className="space-y-2 mb-6">
-              {activeOutcomes
-                .sort((a, b) => a.outcome_order - b.outcome_order)
-                .map((outcome) => (
+              {sortedOutcomes.map((outcome) => (
                   <OutcomeRow
                     key={outcome.outcome_id}
                     outcome={outcome}

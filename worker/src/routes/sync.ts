@@ -7,6 +7,7 @@ import {
 } from "../services/sync.js";
 import { query } from "../db.js";
 import { isRediSyncConfigured } from "../services/redi-api.js";
+import { validateUUID } from "../middleware/validate.js";
 
 export const syncRouter = Router();
 
@@ -33,6 +34,7 @@ syncRouter.post("/courses", async (_req: Request, res: Response) => {
 
 syncRouter.post(
   "/participants/:courseId",
+  validateUUID("courseId"),
   async (req: Request<{ courseId: string }>, res: Response) => {
     if (!isRediSyncConfigured()) {
       res.status(503).json({

@@ -106,6 +106,7 @@ export default function ParticipantListPage() {
               <button
                 onClick={handleBack}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back"
               >
                 <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -151,7 +152,7 @@ export default function ParticipantListPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div role="alert" className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}

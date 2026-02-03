@@ -5,11 +5,13 @@ import {
   listReports,
 } from "../services/report-generator.js";
 import { sendReport, sendAllDailyReports } from "../services/email-sender.js";
+import { validateUUID } from "../middleware/validate.js";
 
 export const reportsRouter = Router();
 
 reportsRouter.post(
   "/generate/:courseId",
+  validateUUID("courseId"),
   async (req: Request<{ courseId: string }>, res: Response) => {
     try {
       const result = await generateCourseReport(req.params.courseId);
@@ -26,6 +28,7 @@ reportsRouter.post(
 
 reportsRouter.post(
   "/generate-and-send/:courseId",
+  validateUUID("courseId"),
   async (req: Request<{ courseId: string }>, res: Response) => {
     try {
       await sendReport(req.params.courseId);

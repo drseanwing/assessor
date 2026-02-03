@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useId, memo } from 'react'
 
 interface FeedbackInputProps {
   value: string
@@ -8,15 +8,16 @@ interface FeedbackInputProps {
   disabled?: boolean
 }
 
-export default function FeedbackInput({ 
-  value, 
-  onChange, 
+export default memo(function FeedbackInput({
+  value,
+  onChange,
   placeholder = 'Enter feedback...',
   label,
-  disabled = false 
+  disabled = false
 }: FeedbackInputProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const id = useId()
 
   // Auto-resize textarea
   useEffect(() => {
@@ -30,12 +31,13 @@ export default function FeedbackInput({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
           {label}
         </label>
       )}
       <div className="relative">
         <textarea
+          id={id}
           ref={textareaRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -59,4 +61,4 @@ export default function FeedbackInput({
       </div>
     </div>
   )
-}
+})

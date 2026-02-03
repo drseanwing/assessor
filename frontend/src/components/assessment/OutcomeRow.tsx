@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { TemplateOutcome, BondyScore, BinaryScore, AssessmentRole } from '../../types/database'
 import BondySelector from './BondySelector'
 
@@ -11,7 +12,7 @@ interface OutcomeRowProps {
   disabled?: boolean
 }
 
-export default function OutcomeRow({
+export default memo(function OutcomeRow({
   outcome,
   bondyScore,
   binaryScore,
@@ -131,4 +132,4 @@ export default function OutcomeRow({
       </div>
     </div>
   )
-}
+})

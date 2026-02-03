@@ -4,11 +4,13 @@ import { useAuthStore } from '../stores/authStore'
 import { loginWithPin, fetchActiveAssessors } from '../lib/auth'
 import type { Assessor } from '../types/database'
 
+type AssessorOption = Pick<Assessor, 'assessor_id' | 'name'>
+
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { setAssessor, setSessionExpiry, isAuthenticated } = useAuthStore()
+  const { setAssessor, setToken, setSessionExpiry, isAuthenticated } = useAuthStore()
 
-  const [assessors, setAssessors] = useState<Assessor[]>([])
+  const [assessors, setAssessors] = useState<AssessorOption[]>([])
   const [selectedAssessor, setSelectedAssessor] = useState<string>('')
   const [pin, setPin] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
@@ -65,6 +67,7 @@ export default function LoginPage() {
       // Set session expiry (default: 12 hours)
       const expiryTime = Date.now() + (12 * 60 * 60 * 1000)
       setAssessor(result.assessor)
+      setToken(result.token ?? null)
       setSessionExpiry(expiryTime)
 
       // Navigate to courses
@@ -148,7 +151,7 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}

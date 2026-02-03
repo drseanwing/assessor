@@ -72,22 +72,57 @@ interface RediApiResponse<T> {
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
+  const maxRetries = 3;
+  const baseDelay = 1000;
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(
-      `REdI API error: ${response.status} ${response.statusText} - ${body}`
-    );
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        if (response.status >= 500 && attempt < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.warn(`REdI API returned ${response.status}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw new Error(`REdI API error: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json() as Promise<T>;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        if (attempt < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.warn(`REdI API timeout, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw new Error("REdI API request timed out after retries");
+      }
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`REdI API error: ${err}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
+    }
   }
 
-  return response.json() as Promise<T>;
+  throw new Error("REdI API: max retries exceeded");
 }
 
 export async function fetchAvailableEvents(): Promise<RediEvent[]> {
@@ -114,7 +149,7 @@ export async function lookupParticipant(
   email: string
 ): Promise<RediParticipant[]> {
   requireUrl(config.redi.participantLookupUrl, "REDI_PARTICIPANT_LOOKUP_URL");
-  console.log(`Looking up participant: ${email}`);
+  console.log("Looking up participant by email");
   const url = `${config.redi.participantLookupUrl}?email=${encodeURIComponent(email)}`;
   const result = await apiFetch<ParticipantLookupResponse>(url);
   console.log(`Found ${result.count} participant records`);
@@ -154,7 +189,7 @@ export async function sendEmail(
   options: SendEmailOptions = {}
 ): Promise<RediApiResponse<unknown>> {
   requireUrl(config.redi.sendEmailUrl, "REDI_SEND_EMAIL_URL");
-  console.log(`Sending email to: ${to}, subject: ${subject}`);
+  console.log("Sending email, subject:", subject);
   const result = await apiFetch<RediApiResponse<unknown>>(
     config.redi.sendEmailUrl,
     {

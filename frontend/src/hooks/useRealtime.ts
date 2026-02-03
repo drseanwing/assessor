@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useAuthStore } from '../stores/authStore'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
@@ -33,19 +34,6 @@ interface UseRealtimeReturn {
   activeAssessors: PresenceInfo[]
   trackPresence: (participantId: string, componentId: string | null) => void
   isOtherAssessorEditing: (participantId: string, componentId?: string) => boolean
-}
-
-function getAssessorInfoFromStorage(): { assessor_id: string; name: string } | null {
-  try {
-    const stored = localStorage.getItem('redi-auth-storage')
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      return parsed.state?.assessor
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null
 }
 
 export function useRealtime({
@@ -97,7 +85,7 @@ export function useRealtime({
         }))
 
         // Start presence tracking
-        const assessor = getAssessorInfoFromStorage()
+        const assessor = useAuthStore.getState().assessor
         if (assessor) {
           const sendPresence = () => {
             if (ws.readyState === WebSocket.OPEN) {
@@ -189,7 +177,7 @@ export function useRealtime({
     presenceRef.current = { participantId, componentId }
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const assessor = getAssessorInfoFromStorage()
+      const assessor = useAuthStore.getState().assessor
       if (assessor) {
         wsRef.current.send(JSON.stringify({
           type: 'presence',
@@ -204,8 +192,7 @@ export function useRealtime({
   }, [courseId])
 
   const isOtherAssessorEditing = useCallback((participantId: string, componentId?: string): boolean => {
-    const assessor = getAssessorInfoFromStorage()
-    const currentAssessorId = assessor?.assessor_id
+    const currentAssessorId = useAuthStore.getState().assessor?.assessor_id
 
     return activeAssessors.some(a => {
       if (a.assessorId === currentAssessorId) return false
