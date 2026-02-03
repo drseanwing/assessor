@@ -106,16 +106,22 @@ export default function AssessmentPage() {
       if (componentsError) throw componentsError
       setComponents(componentsData as TemplateComponent[])
       
-      // Fetch outcomes for each component
-      for (const component of componentsData) {
-        const { data: outcomesData, error: outcomesError } = await supabase
-          .from('template_outcomes')
-          .select('*')
-          .eq('component_id', component.component_id)
-          .order('outcome_order', { ascending: true })
-        
-        if (outcomesError) throw outcomesError
-        setOutcomes(component.component_id, outcomesData as TemplateOutcome[])
+      // Fetch outcomes for all components in a single query
+      const componentIds = (componentsData as TemplateComponent[]).map(c => c.component_id)
+      const { data: allOutcomes, error: outcomesError } = await supabase
+        .from('template_outcomes')
+        .select('*')
+        .in('component_id', componentIds)
+        .order('outcome_order', { ascending: true })
+
+      if (outcomesError) throw outcomesError
+
+      // Group outcomes by component
+      if (allOutcomes) {
+        for (const component of componentsData as TemplateComponent[]) {
+          const componentOutcomes = allOutcomes.filter(o => o.component_id === component.component_id)
+          setOutcomes(component.component_id, componentOutcomes as TemplateOutcome[])
+        }
       }
       
       // Load existing assessments
@@ -161,7 +167,7 @@ export default function AssessmentPage() {
   }
   
   const formatRole = (role: string) => {
-    return role.replace('_', ' ')
+    return role.replaceAll('_', ' ')
   }
 
   if (loading) {

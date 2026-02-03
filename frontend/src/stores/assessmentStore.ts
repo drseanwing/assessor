@@ -167,12 +167,12 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
         .eq('participant_id', participant.participant_id)
         .maybeSingle()
       
-      set({ 
+      set({
         componentAssessments,
         overallAssessment: {
           overallId: overall?.overall_id || null,
           feedback: overall?.overall_feedback || '',
-          engagementScore: overall?.engagement_score || null,
+          engagementScore: overall?.engagement_score ?? null,
           isDirty: false
         }
       })

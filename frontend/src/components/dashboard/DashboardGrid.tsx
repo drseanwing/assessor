@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import type { Participant, TemplateComponent } from '../../types/database'
 import ComponentCell from './ComponentCell'
 
@@ -159,9 +159,8 @@ export default function DashboardGrid({
               const isExpanded = expandedParticipant === item.participant.participant_id
               
               return (
-                <>
-                  <tr 
-                    key={item.participant.participant_id}
+                <Fragment key={item.participant.participant_id}>
+                  <tr
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => onParticipantClick(item.participant.participant_id)}
                   >
@@ -261,7 +260,7 @@ export default function DashboardGrid({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </tbody>

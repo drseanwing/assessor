@@ -72,8 +72,14 @@ export function useRealtime({
     callbacksRef.current = { onAssessmentChange, onScoreChange, onPresenceChange }
   })
 
+  // Serialize participantIds for stable comparison
+  const participantIdsKey = JSON.stringify(participantIds)
+
   useEffect(() => {
     if (!courseId) return
+
+    // Parse back the participantIds for use in the effect
+    const currentParticipantIds = JSON.parse(participantIdsKey)
 
     const connect = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -87,7 +93,7 @@ export function useRealtime({
         ws.send(JSON.stringify({
           type: 'subscribe',
           courseId,
-          participantIds
+          participantIds: currentParticipantIds
         }))
 
         // Start presence tracking
@@ -177,7 +183,7 @@ export function useRealtime({
         clearInterval(presenceIntervalRef.current)
       }
     }
-  }, [courseId, participantIds])
+  }, [courseId, participantIdsKey])
 
   const trackPresence = useCallback((participantId: string, componentId: string | null) => {
     presenceRef.current = { participantId, componentId }

@@ -164,11 +164,13 @@ export default function LoginPage() {
           </form>
 
           {/* Development Note */}
-          <div className="mt-6 p-4 bg-redi-yellow/20 border border-redi-yellow/40 rounded-lg">
-            <p className="text-xs text-redi-navy">
-              <strong>Development Mode:</strong> Any 4-digit PIN will work for demo purposes.
-            </p>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="mt-6 p-4 bg-redi-yellow/20 border border-redi-yellow/40 rounded-lg">
+              <p className="text-xs text-redi-navy">
+                <strong>Development Mode:</strong> Any 4-digit PIN will work for demo purposes.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

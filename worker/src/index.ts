@@ -1,6 +1,8 @@
 import { createServer } from "node:http";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
 import { pool } from "./db.js";
 import { syncRouter } from "./routes/sync.js";
@@ -10,8 +12,19 @@ import { startCronJobs } from "./cron.js";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || false,
+}));
+app.use(express.json({ limit: '100kb' }));
+app.use(helmet());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 app.get("/api/health", async (_req, res) => {
   try {

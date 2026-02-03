@@ -25,6 +25,10 @@ export default {
         'redi-md': '0 4px 6px rgba(0,0,0,0.1)',
         'redi-lg': '0 10px 25px rgba(0,0,0,0.15)',
       },
+      fontFamily: {
+        display: ['"Bebas Neue"', 'sans-serif'],
+        body: ['Montserrat', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],

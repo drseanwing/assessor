@@ -37,7 +37,7 @@ export default function BondySelector({ value, onChange, disabled = false }: Bon
             onClick={() => !disabled && onChange(option.score)}
             disabled={disabled}
             className={`
-              w-10 h-10 rounded-lg font-semibold text-sm
+              w-11 h-11 rounded-lg font-semibold text-sm
               flex items-center justify-center
               transition-all duration-150
               ${getScoreColor(option.score, isSelected)}

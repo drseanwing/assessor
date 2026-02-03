@@ -173,7 +173,7 @@ export default function CourseListPage() {
                       {course.course_name}
                     </h3>
                     <span className="ml-2 px-2 py-1 text-xs font-medium bg-redi-light-teal/30 text-redi-navy rounded">
-                      {course.template?.course_type.replace('_', ' ')}
+                      {course.template?.course_type.replaceAll('_', ' ')}
                     </span>
                   </div>
 

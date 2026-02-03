@@ -93,7 +93,7 @@ export default function ParticipantListPage() {
   }
 
   const formatRole = (role: string) => {
-    return role.replace('_', ' ')
+    return role.replaceAll('_', ' ')
   }
 
   return (
