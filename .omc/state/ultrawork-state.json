@@ -1,7 +1,0 @@
-{
-  "active": true,
-  "started_at": "2026-02-03T13:09:23.661Z",
-  "original_prompt": "<ide_opened_file>The user opened the file /home/sean/scorm/scormwrapper/.omc/state/ultrawork-state.json in the IDE. This may or may not be related to the current task.</ide_opened_file>\nResume previous",
-  "reinforcement_count": 2,
-  "last_checked_at": "2026-02-03T15:43:52.166Z"
-}
