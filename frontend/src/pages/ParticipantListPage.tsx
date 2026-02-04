@@ -2,9 +2,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import type { Participant, Course } from '../types/database'
+import type { Participant, Course, TemplateComponent, TemplateOutcome } from '../types/database'
 import { ENGAGEMENT_OPTIONS } from '../types/database'
 import { getRoleBadgeColor, formatRole } from '../lib/formatting'
+
+interface ComponentStatusInfo {
+  componentId: string
+  componentName: string
+  status: 'not_started' | 'in_progress' | 'complete' | 'issues'
+}
 
 export default function ParticipantListPage() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -18,6 +24,8 @@ export default function ParticipantListPage() {
   const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [engagementScores, setEngagementScores] = useState<Record<string, number>>({})
+  const [componentNames, setComponentNames] = useState<Array<{ id: string; name: string }>>([])
+  const [participantStatuses, setParticipantStatuses] = useState<Record<string, ComponentStatusInfo[]>>({})
 
   const loadCourseData = useCallback(async () => {
     setLoading(true)
@@ -45,21 +53,85 @@ export default function ParticipantListPage() {
       setParticipants(participantsData || [])
       setFilteredParticipants(participantsData || [])
 
-      // Fetch engagement scores for all participants
+      // Fetch engagement scores and component statuses for all participants
       const participantIds = (participantsData || []).map(p => p.participant_id)
       if (participantIds.length > 0) {
-        const { data: overallData } = await supabase
-          .from('overall_assessments')
-          .select('participant_id, engagement_score')
-          .in('participant_id', participantIds)
-        if (overallData) {
+        // Fetch components, outcomes, assessments, scores, and overall in parallel
+        const [overallRes, componentsRes] = await Promise.all([
+          supabase.from('overall_assessments').select('participant_id, engagement_score').in('participant_id', participantIds),
+          supabase.from('template_components').select('*').eq('template_id', courseData.template_id).order('component_order', { ascending: true }),
+        ])
+
+        // Set engagement scores
+        if (overallRes.data) {
           const scores: Record<string, number> = {}
-          for (const row of overallData) {
+          for (const row of overallRes.data) {
             if (row.engagement_score != null) {
               scores[row.participant_id] = row.engagement_score
             }
           }
           setEngagementScores(scores)
+        }
+
+        const components = (componentsRes.data || []) as TemplateComponent[]
+        setComponentNames(components.map(c => ({ id: c.component_id, name: c.component_name })))
+
+        if (components.length > 0) {
+          const componentIds = components.map(c => c.component_id)
+
+          // Fetch outcomes and assessments in parallel
+          const [outcomesRes, assessmentsRes] = await Promise.all([
+            supabase.from('template_outcomes').select('*').in('component_id', componentIds),
+            supabase.from('component_assessments').select('*').in('participant_id', participantIds),
+          ])
+
+          const allOutcomes = (outcomesRes.data || []) as TemplateOutcome[]
+          const allAssessments = assessmentsRes.data || []
+
+          // Fetch scores for all assessments
+          const assessmentIds = allAssessments.map(a => a.assessment_id)
+          const allScores = assessmentIds.length > 0
+            ? (await supabase.from('outcome_scores').select('*').in('assessment_id', assessmentIds)).data || []
+            : []
+
+          // Compute statuses per participant
+          const statuses: Record<string, ComponentStatusInfo[]> = {}
+          for (const p of participantsData || []) {
+            statuses[p.participant_id] = components.map(component => {
+              const componentOutcomes = allOutcomes.filter(o => o.component_id === component.component_id)
+              const applicableOutcomes = componentOutcomes.filter(o =>
+                o.applies_to === 'BOTH' || o.applies_to === p.assessment_role || p.assessment_role === 'BOTH'
+              )
+              const mandatoryOutcomes = applicableOutcomes.filter(o => o.is_mandatory)
+
+              const assessment = allAssessments.find(a => a.participant_id === p.participant_id && a.component_id === component.component_id)
+              const scores = assessment ? allScores.filter(s => s.assessment_id === assessment.assessment_id) : []
+
+              let scoredCount = 0
+              let hasIssues = false
+              for (const outcome of mandatoryOutcomes) {
+                const score = scores.find(s => s.outcome_id === outcome.outcome_id)
+                if (score?.bondy_score || score?.binary_score) {
+                  scoredCount++
+                  if (score.bondy_score === 'MARGINAL' || score.bondy_score === 'NOT_OBSERVED') {
+                    hasIssues = true
+                  }
+                }
+              }
+
+              let status: ComponentStatusInfo['status'] = 'not_started'
+              if (scoredCount > 0) {
+                if (scoredCount >= mandatoryOutcomes.length) {
+                  status = hasIssues ? 'issues' : 'complete'
+                } else {
+                  status = 'in_progress'
+                }
+              }
+
+              return { componentId: component.component_id, componentName: component.component_name, status }
+            })
+          }
+          setParticipantStatuses(statuses)
         }
       }
     } catch (err) {
@@ -206,6 +278,9 @@ export default function ParticipantListPage() {
                       Role
                     </th>
                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Progress
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Engagement
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -247,6 +322,19 @@ export default function ParticipantListPage() {
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(participant.assessment_role)}`}>
                           {formatRole(participant.assessment_role)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5" title={
+                          (participantStatuses[participant.participant_id] || []).map(s => `${s.componentName}: ${s.status.replace('_', ' ')}`).join(', ')
+                        }>
+                          {(participantStatuses[participant.participant_id] || []).map(s => {
+                            const color = s.status === 'complete' ? 'bg-green-500'
+                              : s.status === 'in_progress' ? 'bg-yellow-400'
+                              : s.status === 'issues' ? 'bg-red-500'
+                              : 'bg-gray-300'
+                            return <span key={s.componentId} className={`w-3.5 h-3.5 rounded-full ${color} inline-block`} />
+                          })}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {engagementScores[participant.participant_id] != null ? (
