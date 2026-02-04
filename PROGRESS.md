@@ -436,24 +436,91 @@ All exit criteria have been met:
 
 ## Technology Stack
 
-### Backend/Database
-- PostgreSQL (via Supabase or self-hosted)
-- Supabase Realtime (for multi-assessor synchronization)
-- SQL migrations for schema management
+### Backend/Infrastructure
+- PostgreSQL 16 (database, via Docker)
+- PostgREST 12 (auto-generated REST API from schema)
+- Express 4 worker (JWT auth, WebSocket presence, custom endpoints)
+- nginx (reverse proxy, SPA routing, static assets)
+- Docker / Docker Compose (orchestration)
 
 ### Frontend
-- React 18 (UI framework)
-- TypeScript (type safety)
-- Vite (build tool, fast HMR)
-- Tailwind CSS v3 (styling)
+- React 19 (UI framework)
+- TypeScript 5.9 (type safety)
+- Vite 7 (build tool, fast HMR)
+- Tailwind CSS v3 (styling with REdI brand tokens)
 - Zustand (state management)
 - React Router v6 (routing)
-- Supabase JS Client (database & realtime)
+- Supabase JS Client (database queries via PostgREST proxy)
 
 ### Development Tools
 - ESLint (code quality)
 - npm (package management)
 - Git (version control)
+- Docker Hub registry (`medicalresponse/assessor-frontend`, `medicalresponse/assessor-worker`)
+
+## Self-Hosted Deployment (February 4, 2026)
+
+### Architecture
+The system now runs as a self-hosted Docker Compose stack with 4 services:
+- **db**: PostgreSQL 16 Alpine with schema migrations and seed data
+- **rest**: PostgREST 12 exposing the database as a REST API
+- **worker**: Express 4 backend handling JWT auth, WebSocket presence, and rate limiting
+- **frontend**: nginx serving the React SPA with reverse proxy to rest/worker
+
+Docker images are published to Docker Hub:
+- `medicalresponse/assessor-frontend` (nginx + built React SPA)
+- `medicalresponse/assessor-worker` (Express backend)
+
+### Round 1 Fixes - Auth & Branding
+
+1. **Auth Endpoint Fix** ✅
+   - `GET /api/auth/assessors` had `authMiddleware` applied but is called pre-login (chicken-and-egg)
+   - Removed auth requirement from this endpoint (only returns assessor_id and name)
+   - Files: `worker/src/routes/auth.ts`
+
+2. **Login Page Branding** ✅
+   - Replaced plain text heading with actual REdI logo image
+   - Added brand gradient bar (lime → teal → navy)
+   - Fixed Tailwind font mapping: `fontFamily.body` → `fontFamily.sans` for Montserrat
+   - Fixed color hex values: `teal-dark` (#238585→#1F7A7A), `navy-light` (#2A4F7F→#2A5080)
+   - Files: `frontend/src/pages/LoginPage.tsx`, `frontend/tailwind.config.js`, `frontend/src/index.css`, `frontend/public/redi-logo.png`
+
+### Round 2 Fixes - UI & Features
+
+3. **WebSocket Connection Stability** ✅
+   - Root cause: JWT token not included in WebSocket URL; server rejected with code 4001
+   - Added token to WebSocket URL as query parameter from auth store
+   - Added guard for missing token (sets status to 'disconnected' instead of looping)
+   - Added close-code awareness: codes 4001/4003 (auth failures) skip retry
+   - Files: `frontend/src/hooks/useRealtime.ts`
+
+4. **Assessment Component Tabs Layout** ✅
+   - Changed from horizontal scroll flex (`flex-shrink-0` + `overflow-x-auto`) to CSS grid
+   - Equal-width columns with text wrapping for long component names
+   - Responsive: fits within page width on all screen sizes
+   - Files: `frontend/src/components/assessment/ComponentTabs.tsx`
+
+5. **Course Dashboard Status Circles** ✅
+   - Replaced progress bars with simple colored circles per user request
+   - Gray = Not Started, Yellow = Incomplete, Green = Pass, Red = Fail
+   - Updated legend to match new visual design
+   - Files: `frontend/src/components/dashboard/ComponentCell.tsx`, `frontend/src/components/dashboard/DashboardGrid.tsx`
+
+6. **Overall Assessment Moved to Dedicated Tab** ✅
+   - Overall Assessment (engagement + feedback) was rendering on every component tab
+   - Moved to its own "Overall" tab button alongside ComponentTabs
+   - Only renders when that tab is active, not alongside component scoring
+   - Files: `frontend/src/pages/AssessmentPage.tsx`
+
+7. **Feedback Report Page** ✅ (NEW)
+   - Consolidated read-only view of all assessment data for a participant
+   - Shows participant info with role badge and engagement emoji
+   - Per-component sections with Bondy scale scores (color-coded), scored/total counts
+   - Component feedback per section, overall feedback section
+   - Print support with print button and CSS media queries
+   - Route: `/course/:courseId/participant/:participantId/report`
+   - Navigation: "Report" button added to ParticipantListPage and "View Feedback Report" link on Overall tab
+   - Files: `frontend/src/pages/FeedbackReportPage.tsx`, `frontend/src/App.tsx`, `frontend/src/pages/ParticipantListPage.tsx`
 
 ## Key Features Implemented
 
@@ -477,22 +544,31 @@ All exit criteria have been met:
 4. Clicks participant to begin assessment
 
 ### Assessment Entry Flow
-1. Assessor views participant with component tabs
+1. Assessor views participant with component tabs (CSS grid, equal-width)
 2. Selects component to assess
 3. Scores outcomes using Bondy scale (or Pass/Fail for binary)
 4. Uses Quick Pass for efficient assessment
 5. Adds component-level feedback
-6. Adds overall engagement score and feedback
+6. Switches to "Overall" tab for engagement score and overall feedback
 7. All changes auto-save with visual confirmation
+8. WebSocket connection status shown (Live/Reconnecting/Disconnected)
 
 ### Dashboard Flow
 1. Assessor views course dashboard
-2. Sees grid of all participants with component status
-3. Color-coded progress indicators (green/blue/gray/orange)
-4. Engagement emoji for each participant
+2. Sees grid of all participants with component status circles
+3. Color-coded circles: gray (not started), yellow (incomplete), green (pass), red (fail)
+4. Engagement emoji column for each participant
 5. Expandable rows show component details and feedback
 6. Filter and sort controls for efficient viewing
 7. Print-friendly view for end-of-day reporting
+
+### Feedback Report Flow
+1. Assessor navigates to report from participant list or assessment page
+2. Consolidated read-only view of all component scores
+3. Bondy scale scores color-coded (green/lime/yellow/orange/gray)
+4. Component feedback displayed per section
+5. Overall feedback and engagement score shown
+6. Print button for physical report generation
 
 ## Project Structure
 
@@ -503,6 +579,18 @@ assessor/
 │   │   └── 20260125_initial_schema.sql
 │   ├── seed.sql
 │   └── README.md
+├── worker/
+│   ├── src/
+│   │   ├── index.ts           # Express server + WebSocket setup
+│   │   ├── config.ts          # Environment config
+│   │   ├── db.ts              # PostgreSQL connection pool
+│   │   ├── middleware.ts       # JWT auth middleware
+│   │   ├── routes/
+│   │   │   └── auth.ts        # Login + assessor listing endpoints
+│   │   └── websocket.ts       # WebSocket presence + token auth
+│   ├── Dockerfile
+│   ├── package.json
+│   └── tsconfig.json
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -518,7 +606,9 @@ assessor/
 │   │   │   │   └── SaveIndicator.tsx
 │   │   │   ├── common/
 │   │   │   │   ├── index.ts
+│   │   │   │   ├── ErrorBoundary.tsx
 │   │   │   │   ├── SyncIndicator.tsx
+│   │   │   │   ├── OfflineIndicator.tsx
 │   │   │   │   └── ActiveAssessorsBadge.tsx
 │   │   │   └── dashboard/
 │   │   │       ├── index.ts
@@ -533,31 +623,35 @@ assessor/
 │   │   ├── lib/
 │   │   │   ├── supabase.ts
 │   │   │   ├── auth.ts
+│   │   │   ├── formatting.ts
 │   │   │   ├── db.ts
 │   │   │   └── sharepoint.ts
 │   │   ├── pages/
 │   │   │   ├── LoginPage.tsx
-│   │   │   ├── DashboardPage.tsx
 │   │   │   ├── CourseListPage.tsx
 │   │   │   ├── CourseDashboardPage.tsx
 │   │   │   ├── ParticipantListPage.tsx
-│   │   │   └── AssessmentPage.tsx
+│   │   │   ├── AssessmentPage.tsx
+│   │   │   └── FeedbackReportPage.tsx
 │   │   ├── stores/
 │   │   │   ├── authStore.ts
 │   │   │   └── assessmentStore.ts
 │   │   ├── types/
-│   │   │   └── database.ts
+│   │   │   ├── database.ts
+│   │   │   └── shared.ts
 │   │   ├── App.tsx
 │   │   ├── main.tsx
 │   │   └── index.css
+│   ├── public/
+│   │   └── redi-logo.png
+│   ├── Dockerfile
 │   ├── package.json
 │   ├── tailwind.config.js
 │   ├── vite.config.ts
-│   └── README.md
-├── Dockerfile
-├── nginx.conf
-├── vercel.json
+│   └── nginx.conf
+├── docker-compose.yml
 ├── redi-assessment-spec.md
+├── CLAUDE.md
 └── PROGRESS.md
 ```
 
@@ -600,18 +694,33 @@ The following items remain before production readiness:
 
 ## Development Notes
 
-### Database Setup
-- Use Supabase for hosted solution or self-hosted PostgreSQL
-- Run migrations: `psql -f supabase/migrations/20260125_initial_schema.sql`
-- Run seed data: `psql -f supabase/seed.sql`
-- Enable realtime on: `component_assessments`, `outcome_scores`, `overall_assessments`
+### Docker Deployment (Self-Hosted)
+```bash
+# Start all services
+docker compose up -d
 
-### Frontend Setup
+# View logs
+docker compose logs -f
+
+# Rebuild and restart (after code changes)
+docker compose build frontend worker
+docker compose up -d --force-recreate frontend worker
+```
+
+### Docker Hub Images
+```bash
+# Build, tag, and push
+docker build -t medicalresponse/assessor-frontend:latest ./frontend
+docker build -t medicalresponse/assessor-worker:latest ./worker
+docker push medicalresponse/assessor-frontend:latest
+docker push medicalresponse/assessor-worker:latest
+```
+
+### Local Development
 ```bash
 cd frontend
 npm install
 cp .env.example .env
-# Edit .env with your Supabase credentials
 npm run dev
 ```
 
@@ -622,6 +731,8 @@ npm run dev
 
 ### Security Considerations
 - PIN authentication uses server-side bcrypt validation via the worker API. PINs are hashed with bcrypt (10 rounds) and compared server-side.
+- JWT tokens (12h expiry) for API and WebSocket authentication
+- Rate limiting on login endpoint (10 attempts per 15 minutes)
 - RLS policies are basic - refine for production
 - Session tokens stored in localStorage
 - HTTPS required for production
@@ -630,9 +741,7 @@ npm run dev
 
 1. **Assessor Management** - No UI to add/edit assessors (use SQL for now)
 2. **PIN Security** - Development mode accepts any 4-digit PIN
-3. **Error Recovery** - Basic error handling, needs improvement
-4. **Offline Support** - Not yet implemented (Phase 6)
-5. **SharePoint Integration** - Not yet implemented (Phase 5)
+3. **SharePoint Integration** - Not yet implemented (Phase 5, requires Azure AD)
 
 ## Documentation
 
@@ -643,11 +752,21 @@ npm run dev
 
 ---
 
-**Last Updated:** January 28, 2026
-**Current Phase:** Phases 1-4 Complete, Phase 5-6 Partial, Code Quality Fixes Complete
-**Overall Progress:** 52/58 total tasks (89.7%)
+**Last Updated:** February 4, 2026
+**Current Phase:** Phases 1-4 Complete, Phase 5-6 Partial, Self-Hosted Deployment Live
+**Overall Progress:** 59/65 total tasks (90.8%)
 
-**Major Improvements Since Last Update (Jan 28):**
+**Major Improvements Since Last Update (Feb 4):**
+- Migrated to self-hosted Docker Compose architecture (PostgreSQL + PostgREST + Express worker + nginx)
+- Fixed auth endpoint chicken-and-egg bug (assessor listing required JWT pre-login)
+- Fixed WebSocket connection cycling (token not sent, no close-code awareness)
+- Aligned login page branding with REdI guidelines (logo, gradient bar, Montserrat font, color fixes)
+- Replaced dashboard progress bars with simple colored status circles
+- Added dedicated Overall Assessment tab (moved from rendering on every component)
+- Created Feedback Report page with consolidated read-only view and print support
+- Component tabs now use CSS grid with equal-width columns and text wrapping
+
+**Previous Improvements (Jan 28):**
 - Fixed critical PIN authentication vulnerability
 - Fixed 5 React hook dependency issues
 - Added Error Boundary for graceful error handling
@@ -658,5 +777,4 @@ npm run dev
 
 **Note:** Remaining tasks require external setup:
 - SharePoint integration requires Azure AD registration
-- Production deployment requires Supabase instance
 - Performance testing requires large-scale participant dataset
