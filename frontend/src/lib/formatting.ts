@@ -1,5 +1,3 @@
-import type { AssessmentRole } from '../types/database'
-
 /**
  * Get badge color class for a given role
  */
