@@ -48,13 +48,14 @@ export async function loginWithPin(credentials: LoginCredentials): Promise<Login
   }
 }
 
-export async function fetchActiveAssessors(): Promise<Pick<Assessor, 'assessor_id' | 'name'>[]> {
+export async function fetchActiveAssessors(): Promise<{ data: Pick<Assessor, 'assessor_id' | 'name'>[], error: string | null }> {
   try {
     const response = await fetch(`${API_BASE}/auth/assessors`)
     if (!response.ok) throw new Error('Failed to fetch assessors')
-    return await response.json()
+    const result = await response.json()
+    return { data: result, error: null }
   } catch (error) {
     console.error('Error fetching assessors:', error)
-    return []
+    return { data: [], error: 'Failed to load assessors' }
   }
 }

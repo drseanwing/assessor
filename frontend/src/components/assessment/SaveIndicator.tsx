@@ -49,7 +49,7 @@ export default function SaveIndicator({ status, lastSaved }: SaveIndicatorProps)
   }
 
   return (
-    <div className="flex items-center space-x-1.5 text-xs">
+    <div className="flex items-center space-x-1.5 text-xs" role="status" aria-live="polite">
       {getStatusDisplay()}
     </div>
   )

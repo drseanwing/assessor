@@ -1,11 +1,4 @@
-interface ComponentStatus {
-  componentId: string
-  status: 'not_started' | 'in_progress' | 'complete' | 'issues'
-  scoredCount: number
-  totalCount: number
-  feedback: string | null
-  isQuickPassed: boolean
-}
+import type { ComponentStatus } from '../../types/shared'
 
 interface ComponentCellProps {
   status?: ComponentStatus

@@ -1,21 +1,14 @@
 import { Fragment, useState } from 'react'
 import type { Participant, TemplateComponent } from '../../types/database'
+import type { ComponentStatus } from '../../types/shared'
 import ComponentCell from './ComponentCell'
+import { abbreviateComponentName } from '../../lib/formatting'
 
 interface ParticipantAssessmentData {
   participant: Participant
   componentStatuses: Record<string, ComponentStatus>
   overallFeedback: string | null
   engagementScore: number | null
-}
-
-interface ComponentStatus {
-  componentId: string
-  status: 'not_started' | 'in_progress' | 'complete' | 'issues'
-  scoredCount: number
-  totalCount: number
-  feedback: string | null
-  isQuickPassed: boolean
 }
 
 interface DashboardGridProps {
@@ -52,6 +45,7 @@ export default function DashboardGrid({
         allComplete = false
       } else if (status === 'issues') {
         hasIssues = true
+        allComplete = false
       } else if (status === 'complete') {
         // Complete, continue
       }
@@ -101,14 +95,6 @@ export default function DashboardGrid({
       default:
         return null
     }
-  }
-
-  const abbreviateComponentName = (name: string): string => {
-    if (name.includes('Airway')) return 'Airway'
-    if (name.includes('Electrical')) return 'Elec Tx'
-    if (name.includes('CPR')) return 'CPR/AED'
-    if (name.includes('Simulation')) return 'Int Sim'
-    return name.substring(0, 10)
   }
 
   if (data.length === 0) {

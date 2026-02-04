@@ -10,9 +10,12 @@ function optional(key: string, fallback: string): string {
   return process.env[key] || fallback;
 }
 
+const port = parseInt(optional("PORT", "5000"), 10);
+if (isNaN(port)) throw new Error("PORT must be a number");
+
 export const config = {
   databaseUrl: required("DATABASE_URL"),
-  port: parseInt(optional("PORT", "5000"), 10),
+  port,
   jwtSecret: required("JWT_SECRET"),
 
   redi: {

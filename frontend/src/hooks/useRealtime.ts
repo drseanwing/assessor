@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuthStore } from '../stores/authStore'
+import type { PresenceInfo } from '../types/shared'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
@@ -19,14 +20,6 @@ interface RealtimePayload {
 
 interface PresenceState {
   [key: string]: PresenceInfo[]
-}
-
-interface PresenceInfo {
-  assessorId: string
-  assessorName: string
-  participantId: string
-  componentId: string | null
-  lastSeen: string
 }
 
 interface UseRealtimeReturn {
@@ -137,10 +130,17 @@ export function useRealtime({
       }
 
       ws.onclose = () => {
-        setConnectionStatus('reconnecting')
         if (presenceIntervalRef.current) {
           clearInterval(presenceIntervalRef.current)
         }
+
+        // Stop reconnecting after 10 failed attempts
+        if (reconnectAttemptsRef.current >= 10) {
+          setConnectionStatus('disconnected')
+          return
+        }
+
+        setConnectionStatus('reconnecting')
 
         // Exponential backoff reconnection
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000)

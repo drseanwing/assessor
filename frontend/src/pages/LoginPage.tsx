@@ -6,6 +6,8 @@ import type { Assessor } from '../types/database'
 
 type AssessorOption = Pick<Assessor, 'assessor_id' | 'name'>
 
+const SESSION_DURATION_MS = 12 * 60 * 60 * 1000 // 12 hours
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setAssessor, setToken, setSessionExpiry, isAuthenticated } = useAuthStore()
@@ -15,9 +17,15 @@ export default function LoginPage() {
   const [pin, setPin] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
+  const [assessorLoadError, setAssessorLoadError] = useState<string>('')
 
   const loadAssessors = useCallback(async () => {
-    const data = await fetchActiveAssessors()
+    setAssessorLoadError('')
+    const { data, error: fetchError } = await fetchActiveAssessors()
+    if (fetchError) {
+      setAssessorLoadError(fetchError)
+      return
+    }
     setAssessors(data)
     if (data.length > 0) {
       setSelectedAssessor(data[0].assessor_id)
@@ -65,7 +73,7 @@ export default function LoginPage() {
 
     if (result.success && result.assessor) {
       // Set session expiry (default: 12 hours)
-      const expiryTime = Date.now() + (12 * 60 * 60 * 1000)
+      const expiryTime = Date.now() + SESSION_DURATION_MS
       setAssessor(result.assessor)
       setToken(result.token ?? null)
       setSessionExpiry(expiryTime)
@@ -115,8 +123,10 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
                 disabled={loading || assessors.length === 0}
               >
-                {assessors.length === 0 ? (
+                {assessors.length === 0 && !assessorLoadError ? (
                   <option value="">Loading assessors...</option>
+                ) : assessorLoadError ? (
+                  <option value="">Failed to load assessors</option>
                 ) : (
                   assessors.map((assessor) => (
                     <option key={assessor.assessor_id} value={assessor.assessor_id}>
@@ -125,6 +135,18 @@ export default function LoginPage() {
                   ))
                 )}
               </select>
+              {assessorLoadError && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-red-600">{assessorLoadError}</span>
+                  <button
+                    type="button"
+                    onClick={loadAssessors}
+                    className="text-sm font-medium text-redi-teal hover:text-redi-teal-dark"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* PIN Input */}

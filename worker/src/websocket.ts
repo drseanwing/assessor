@@ -1,7 +1,18 @@
 import { type Server as HttpServer } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
 import pg from "pg";
+import jwt from "jsonwebtoken";
 import { config } from "./config.js";
+
+function safeSend(ws: WebSocket, data: string): void {
+  try {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(data);
+    }
+  } catch (err) {
+    console.error("WebSocket send error:", err);
+  }
+}
 
 interface Subscription {
   courseId: string;
@@ -27,7 +38,20 @@ const clients = new Map<WebSocket, ClientState>();
 export function setupWebSocket(server: HttpServer): WebSocketServer {
   const wss = new WebSocketServer({ server });
 
-  wss.on("connection", (ws) => {
+  wss.on("connection", (ws, req) => {
+    try {
+      const url = new URL(req.url || "", `http://${req.headers.host}`);
+      const token = url.searchParams.get("token");
+      if (!token) {
+        ws.close(4001, "Authentication required");
+        return;
+      }
+      jwt.verify(token, config.jwtSecret, { algorithms: ["HS256"] });
+    } catch {
+      ws.close(4001, "Invalid or expired token");
+      return;
+    }
+
     console.log("WebSocket client connected");
 
     clients.set(ws, { ws, subscription: null, presence: null });
@@ -76,21 +100,21 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
   if (!state) return;
 
   if (!isString(message.type)) {
-    ws.send(JSON.stringify({ type: "error", error: "Missing message type" }));
+    safeSend(ws, JSON.stringify({ type: "error", error: "Missing message type" }));
     return;
   }
 
   switch (message.type) {
     case "subscribe": {
       if (!isString(message.courseId)) {
-        ws.send(JSON.stringify({ type: "error", error: "courseId is required" }));
+        safeSend(ws, JSON.stringify({ type: "error", error: "courseId is required" }));
         return;
       }
       state.subscription = {
         courseId: message.courseId,
         participantIds: isStringArray(message.participantIds) ? message.participantIds : [],
       };
-      ws.send(
+      safeSend(ws,
         JSON.stringify({
           type: "subscribed",
           courseId: state.subscription.courseId,
@@ -102,7 +126,7 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
 
     case "presence": {
       if (!isString(message.assessorId) || !isString(message.assessorName) || !isString(message.participantId)) {
-        ws.send(JSON.stringify({ type: "error", error: "assessorId, assessorName, and participantId are required" }));
+        safeSend(ws, JSON.stringify({ type: "error", error: "assessorId, assessorName, and participantId are required" }));
         return;
       }
       state.presence = {
@@ -117,12 +141,12 @@ function handleClientMessage(ws: WebSocket, message: Record<string, unknown>): v
     }
 
     case "ping": {
-      ws.send(JSON.stringify({ type: "pong" }));
+      safeSend(ws, JSON.stringify({ type: "pong" }));
       break;
     }
 
     default: {
-      ws.send(JSON.stringify({ type: "error", error: "Unknown message type" }));
+      safeSend(ws, JSON.stringify({ type: "error", error: "Unknown message type" }));
     }
   }
 }
@@ -143,22 +167,16 @@ function broadcastPresenceState(courseId: string): void {
   const payload = JSON.stringify({ type: "presence_state", assessors });
 
   for (const [ws, state] of clients.entries()) {
-    if (ws.readyState === WebSocket.OPEN && state.subscription?.courseId === courseId) {
-      ws.send(payload);
+    if (state.subscription?.courseId === courseId) {
+      safeSend(ws, payload);
     }
   }
-}
-
-function broadcastPresenceLeave(_sender: WebSocket, _presence: PresenceInfo): void {
-  const senderState = clients.get(_sender);
-  if (!senderState?.subscription) return;
-  broadcastPresenceState(senderState.subscription.courseId);
 }
 
 function sendCurrentPresence(ws: WebSocket, courseId: string): void {
   const assessors = collectPresenceForCourse(courseId);
   if (assessors.length > 0) {
-    ws.send(JSON.stringify({ type: "presence_state", assessors }));
+    safeSend(ws, JSON.stringify({ type: "presence_state", assessors }));
   }
 }
 
@@ -183,7 +201,6 @@ function broadcastAssessmentChange(payload: string): void {
   });
 
   for (const [ws, state] of clients.entries()) {
-    if (ws.readyState !== WebSocket.OPEN) continue;
     if (!state.subscription) continue;
 
     if (
@@ -191,7 +208,7 @@ function broadcastAssessmentChange(payload: string): void {
       state.subscription.participantIds.length === 0 ||
       state.subscription.participantIds.includes(participantId)
     ) {
-      ws.send(message);
+      safeSend(ws, message);
     }
   }
 }

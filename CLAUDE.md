@@ -1,21 +1,21 @@
 # CLAUDE.md - Agent Instructions
 
 ## Project Overview
-[Brief description of the project, its purpose, and key technologies]
+REdI Assessment System is a competency assessment platform for Queensland Health's Resuscitation Education Initiative. It enables assessors to evaluate healthcare professionals' resuscitation competencies using the Bondy Scale across multiple components including Airway Management, Electrical Therapies, CPR & Defibrillation, and Integrated Simulation. The system supports real-time collaboration between multiple assessors with automatic synchronization.
 
 ## Tech Stack
-- **Language:** [e.g., Python 3.11+, Node.js 20+, PHP 8.2+]
-- **Framework:** [e.g., FastAPI, Next.js, Laravel]
-- **Database:** [e.g., PostgreSQL, MySQL, SQLite]
-- **Infrastructure:** Docker, [cloud provider if applicable]
+- **Language:** TypeScript 5.9
+- **Framework:** React 19 + Vite 7 (frontend), Express 4 (worker/backend)
+- **Database:** PostgreSQL 16 with PostgREST 12
+- **Infrastructure:** Docker, Docker Compose, nginx reverse proxy
 
 ## Development Standards
 
 ### Code Style
-- Follow [language-specific style guide, e.g., PEP 8, PSR-12, Airbnb]
+- Follow TypeScript/React best practices (ESLint with React Hooks rules)
 - Maximum line length: 120 characters
 - Use meaningful variable/function names (no abbreviations except common ones)
-- All functions require docstrings/JSDoc comments
+- All functions require JSDoc comments for complex logic
 
 ### Logging Requirements
 - Use structured logging (JSON format preferred)
@@ -38,10 +38,9 @@
 - E2E tests for critical user journeys
 
 ## File Naming Conventions
-- Python: `snake_case.py`
-- JavaScript/TypeScript: `camelCase.ts` or `kebab-case.ts` (be consistent)
-- CSS/SCSS: `kebab-case.scss`
-- Tests: `*.test.ts`, `*_test.py`, `*.spec.ts`
+- TypeScript/React: `PascalCase.tsx` for components, `camelCase.ts` for utilities
+- CSS: Tailwind CSS (no separate CSS files)
+- Tests: `*.test.ts`, `*.spec.ts`
 
 ## Git Workflow
 - Branch naming: `feature/`, `bugfix/`, `hotfix/`, `chore/`, `docs/`
@@ -50,10 +49,10 @@
 - Squash commits on merge to main
 
 ## Key Files
-- `docker/docker-compose.yml` - Local development environment
-- `docs/ARCHITECTURE.md` - System architecture documentation
+- `docker-compose.yml` - Local development environment
+- `redi-assessment-spec.md` - System specification and requirements
 - `.env.example` - Required environment variables
-- `TASKS.md` - Current project tasks and progress
+- `PROGRESS.md` - Implementation progress tracking
 
 ## Prohibited Actions
 - Do not commit secrets or credentials
@@ -63,14 +62,25 @@
 
 ## Common Commands
 ```bash
-# Development
-docker compose -f docker/docker-compose.yml up -d
-./scripts/setup.sh
+# Development (Docker)
+docker compose up -d
+docker compose logs -f
+
+# Frontend Development
+cd frontend
+npm install
+npm run dev
+npm run build
 
 # Testing
-./scripts/test.sh
-docker compose exec app pytest --cov
+cd frontend
+npm run test
+npm run test:e2e
 
 # Linting
-pre-commit run --all-files
+cd frontend
+npm run lint
+
+# Database
+docker compose exec postgres psql -U postgres -d redi_assessment
 ```

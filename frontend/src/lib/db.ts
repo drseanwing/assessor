@@ -1,11 +1,13 @@
 /**
  * IndexedDB Database Module for Offline Support
- * 
+ *
  * This module provides:
  * - Local storage of assessment data for offline use
  * - Queue for pending changes when offline
  * - Automatic sync when connection is restored
  */
+
+import type { PendingChange } from '../types/shared'
 
 const DB_NAME = 'redi-assessment-db'
 const DB_VERSION = 1
@@ -16,15 +18,6 @@ const STORES = {
   SCORES: 'scores',
   PENDING_CHANGES: 'pending_changes'
 } as const
-
-interface PendingChange {
-  id: string
-  type: 'assessment' | 'score' | 'overall'
-  action: 'create' | 'update'
-  data: Record<string, unknown>
-  timestamp: number
-  retryCount: number
-}
 
 let db: IDBDatabase | null = null
 
@@ -85,7 +78,7 @@ export async function addPendingChange(change: Omit<PendingChange, 'id' | 'times
   
   const pendingChange: PendingChange = {
     ...change,
-    id: `${change.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${change.type}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     timestamp: Date.now(),
     retryCount: 0
   }

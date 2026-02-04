@@ -5,6 +5,7 @@ import { useAssessmentStore } from '../stores/assessmentStore'
 import { useRealtime } from '../hooks/useRealtime'
 import { supabase } from '../lib/supabase'
 import type { Participant, TemplateComponent, TemplateOutcome } from '../types/database'
+import { getRoleBadgeColor, formatRole } from '../lib/formatting'
 
 import ComponentTabs from '../components/assessment/ComponentTabs'
 import OutcomeRow from '../components/assessment/OutcomeRow'
@@ -156,23 +157,6 @@ export default function AssessmentPage() {
     () => [...activeOutcomes].sort((a, b) => a.outcome_order - b.outcome_order),
     [activeOutcomes]
   )
-  
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'TEAM_LEADER':
-        return 'bg-redi-navy/10 text-redi-navy'
-      case 'TEAM_MEMBER':
-        return 'bg-redi-teal/10 text-redi-teal'
-      case 'BOTH':
-        return 'bg-redi-sky/10 text-redi-sky'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-  
-  const formatRole = (role: string) => {
-    return role.replaceAll('_', ' ')
-  }
 
   if (loading) {
     return (

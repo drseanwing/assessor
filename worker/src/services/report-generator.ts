@@ -1,5 +1,5 @@
-import { writeFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { writeFile, readdir, mkdir } from "node:fs/promises";
+import { join, dirname } from "node:path";
 import { query } from "../db.js";
 import { config } from "../config.js";
 
@@ -402,6 +402,7 @@ export async function generateCourseReport(
   const markdownPath = join(config.reportDir, `${baseName}.md`);
   const csvPath = join(config.reportDir, `${baseName}.csv`);
 
+  await mkdir(dirname(markdownPath), { recursive: true });
   await writeFile(markdownPath, markdown, "utf-8");
   await writeFile(csvPath, csv, "utf-8");
 

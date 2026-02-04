@@ -50,7 +50,7 @@ export default function SyncIndicator({ status }: SyncIndicatorProps) {
   }
 
   return (
-    <div className="flex items-center space-x-1.5" title={`Connection status: ${status}`}>
+    <div className="flex items-center space-x-1.5" title={`Connection status: ${status}`} role="status" aria-live="polite">
       {getStatusDisplay()}
     </div>
   )

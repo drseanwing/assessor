@@ -1,4 +1,4 @@
-import { query, transaction } from "../db.js";
+import { query } from "../db.js";
 import {
   fetchAvailableEvents,
   lookupParticipant,

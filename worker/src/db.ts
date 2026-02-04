@@ -5,6 +5,9 @@ const { Pool } = pg;
 
 export const pool = new Pool({
   connectionString: config.databaseUrl,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 pool.on("error", (err) => {
@@ -24,10 +27,6 @@ export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   return result;
 }
 
-export async function getClient(): Promise<pg.PoolClient> {
-  return pool.connect();
-}
-
 export async function transaction<T>(
   fn: (client: pg.PoolClient) => Promise<T>
 ): Promise<T> {
@@ -38,7 +37,7 @@ export async function transaction<T>(
     await client.query("COMMIT");
     return result;
   } catch (err) {
-    await client.query("ROLLBACK");
+    try { await client.query("ROLLBACK"); } catch {}
     throw err;
   } finally {
     client.release();

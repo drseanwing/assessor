@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ENGAGEMENT_OPTIONS } from '../../types/database'
 
 interface EngagementSelectorProps {
@@ -6,7 +7,7 @@ interface EngagementSelectorProps {
   disabled?: boolean
 }
 
-export default function EngagementSelector({ value, onChange, disabled = false }: EngagementSelectorProps) {
+export default memo(function EngagementSelector({ value, onChange, disabled = false }: EngagementSelectorProps) {
   return (
     <div className="flex space-x-2">
       {ENGAGEMENT_OPTIONS.map((option) => {
@@ -35,4 +36,4 @@ export default function EngagementSelector({ value, onChange, disabled = false }
       })}
     </div>
   )
-}
+})

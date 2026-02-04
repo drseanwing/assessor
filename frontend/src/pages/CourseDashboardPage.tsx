@@ -83,6 +83,9 @@ export default function CourseDashboardPage() {
           .in('participant_id', pIds),
       ])
 
+      if (assessmentsResult.error) throw assessmentsResult.error
+      if (overallResult.error) throw overallResult.error
+
       const allAssessments = assessmentsResult.data || []
       const allOverallAssessments = overallResult.data || []
 
@@ -91,10 +94,11 @@ export default function CourseDashboardPage() {
       let allScores: Array<{ assessment_id: string; outcome_id: string; bondy_score?: string; binary_score?: boolean }> = []
 
       if (assessmentIds.length > 0) {
-        const { data: scoresData } = await supabase
+        const { data: scoresData, error: scoresError } = await supabase
           .from('outcome_scores')
           .select('*')
           .in('assessment_id', assessmentIds)
+        if (scoresError) throw scoresError
         allScores = scoresData || []
       }
 
@@ -208,7 +212,7 @@ export default function CourseDashboardPage() {
           participant,
           componentStatuses,
           overallFeedback: overall?.overall_feedback || null,
-          engagementScore: overall?.engagement_score || null
+          engagementScore: overall?.engagement_score ?? null
         })
       }
 
@@ -219,6 +223,7 @@ export default function CourseDashboardPage() {
 
     } catch (err) {
       console.error('Error loading assessment data:', err)
+      setError('Failed to load assessment data')
     }
   }, [participants, components, outcomes])
 
@@ -277,11 +282,12 @@ export default function CourseDashboardPage() {
       const outcomesMap: Record<string, TemplateOutcome[]> = {}
 
       if (componentIds.length > 0) {
-        const { data: allOutcomesData } = await supabase
+        const { data: allOutcomesData, error: outcomesError } = await supabase
           .from('template_outcomes')
           .select('*')
           .in('component_id', componentIds)
           .order('outcome_order', { ascending: true })
+        if (outcomesError) throw outcomesError
 
         // Organize outcomes by component_id in memory
         for (const outcome of allOutcomesData || []) {
@@ -409,7 +415,7 @@ export default function CourseDashboardPage() {
   }, [assessmentData, filter, sortBy, components])
   
   const getEngagementEmoji = (score: number | null) => {
-    if (!score) return null
+    if (score === null || score === undefined) return null
     const option = ENGAGEMENT_OPTIONS.find(o => o.value === score)
     return option?.emoji || null
   }

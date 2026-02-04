@@ -40,10 +40,11 @@ export default function CourseListPage() {
       // For each course, get participant count
       const coursesWithCounts = await Promise.all(
         (coursesData || []).map(async (course) => {
-          const { count } = await supabase
+          const { count, error: countError } = await supabase
             .from('participants')
             .select('*', { count: 'exact', head: true })
             .eq('course_id', course.course_id)
+          if (countError) console.error('Error fetching participant count:', countError)
 
           return {
             ...course,

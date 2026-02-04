@@ -46,6 +46,7 @@ interface AssessmentState {
   activeComponentId: string | null
   saveStatus: 'idle' | 'saving' | 'saved' | 'error'
   lastSaved: Date | null
+  loadError: string | null
   
   // Actions
   setParticipant: (participant: Participant) => void
@@ -89,7 +90,8 @@ const initialState = {
   },
   activeComponentId: null,
   saveStatus: 'idle' as const,
-  lastSaved: null
+  lastSaved: null,
+  loadError: null
 }
 
 export const useAssessmentStore = create<AssessmentState>((set, get) => ({
@@ -116,6 +118,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   loadAssessments: async () => {
     const { participant, components } = get()
     if (!participant) return
+
+    set({ loadError: null })
 
     try {
       // Load component assessments
@@ -185,6 +189,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       })
     } catch (error) {
       console.error('Error loading assessments:', error)
+      set({ loadError: error instanceof Error ? error.message : 'Failed to load assessments' })
     }
   },
   
@@ -381,12 +386,13 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
         
         try {
           // Save component assessments
+          const savedComponentIds: string[] = []
           for (const [componentId, assessment] of Object.entries(componentAssessments)) {
             if (!assessment.isDirty) continue
-            
+
             // Upsert component assessment
             let assessmentId = assessment.assessmentId
-            
+
             if (!assessmentId) {
               // Create new assessment
               const { data, error } = await supabase
@@ -400,10 +406,10 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 })
                 .select()
                 .single()
-              
+
               if (error) throw error
               assessmentId = data.assessment_id
-              
+
               // Update local state with new ID
               set((state) => ({
                 componentAssessments: {
@@ -425,14 +431,14 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                   last_modified_at: new Date().toISOString()
                 })
                 .eq('assessment_id', assessmentId)
-              
+
               if (error) throw error
             }
-            
+
             // Save outcome scores
             for (const [outcomeId, score] of Object.entries(assessment.scores)) {
               if (!score.isDirty) continue
-              
+
               const { error } = await supabase
                 .from('outcome_scores')
                 .upsert({
@@ -445,25 +451,30 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
                 }, {
                   onConflict: 'assessment_id,outcome_id'
                 })
-              
+
               if (error) throw error
             }
-            
-            // Mark as clean
-            set((state) => ({
-              componentAssessments: {
-                ...state.componentAssessments,
-                [componentId]: {
-                  ...state.componentAssessments[componentId],
+
+            savedComponentIds.push(componentId)
+          }
+
+          // Mark all saved components as clean after entire loop succeeds
+          if (savedComponentIds.length > 0) {
+            set((state) => {
+              const updated = { ...state.componentAssessments }
+              for (const componentId of savedComponentIds) {
+                updated[componentId] = {
+                  ...updated[componentId],
                   isDirty: false,
                   scores: Object.fromEntries(
-                    Object.entries(state.componentAssessments[componentId].scores).map(
+                    Object.entries(updated[componentId].scores).map(
                       ([id, s]) => [id, { ...s, isDirty: false }]
                     )
                   )
                 }
               }
-            }))
+              return { componentAssessments: updated }
+            })
           }
           
           // Save overall assessment if dirty

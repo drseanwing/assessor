@@ -73,14 +73,28 @@ process.on("uncaughtException", (err) => {
 
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down...");
-  server.close();
-  await pool.end();
-  process.exit(0);
+  const forceExit = setTimeout(() => process.exit(1), 10000);
+  try {
+    server.close();
+    await pool.end();
+  } catch (err) {
+    console.error("Error during shutdown:", err);
+  } finally {
+    clearTimeout(forceExit);
+    process.exit(0);
+  }
 });
 
 process.on("SIGINT", async () => {
   console.log("SIGINT received, shutting down...");
-  server.close();
-  await pool.end();
-  process.exit(0);
+  const forceExit = setTimeout(() => process.exit(1), 10000);
+  try {
+    server.close();
+    await pool.end();
+  } catch (err) {
+    console.error("Error during shutdown:", err);
+  } finally {
+    clearTimeout(forceExit);
+    process.exit(0);
+  }
 });

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { query } from "../db.js";
 import { config } from "../config.js";
 import rateLimit from "express-rate-limit";
+import { authMiddleware } from "../middleware/auth.js";
 
 const authRouter = Router();
 
@@ -77,7 +78,7 @@ authRouter.post("/login", loginLimiter, async (req: Request<object, object, Logi
   }
 });
 
-authRouter.get("/assessors", async (_req: Request, res: Response) => {
+authRouter.get("/assessors", authMiddleware, async (_req: Request, res: Response) => {
   try {
     const result = await query(
       "SELECT assessor_id, name FROM assessors WHERE is_active = true ORDER BY name ASC"

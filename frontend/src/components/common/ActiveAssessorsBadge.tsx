@@ -1,10 +1,4 @@
-interface PresenceInfo {
-  assessorId: string
-  assessorName: string
-  participantId: string
-  componentId: string | null
-  lastSeen: string
-}
+import type { PresenceInfo } from '../../types/shared'
 
 interface ActiveAssessorsBadgeProps {
   assessors: PresenceInfo[]

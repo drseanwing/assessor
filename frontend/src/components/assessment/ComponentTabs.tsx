@@ -1,4 +1,6 @@
+import { useMemo, memo } from 'react'
 import type { TemplateComponent } from '../../types/database'
+import { abbreviateComponentName } from '../../lib/formatting'
 
 interface ComponentTabsProps {
   components: TemplateComponent[]
@@ -7,7 +9,7 @@ interface ComponentTabsProps {
   getComponentStatus: (componentId: string) => 'not_started' | 'in_progress' | 'complete'
 }
 
-export default function ComponentTabs({ 
+export default memo(function ComponentTabs({ 
   components, 
   activeComponentId, 
   onSelectComponent,
@@ -53,26 +55,15 @@ export default function ComponentTabs({
     }
   }
 
-  // Abbreviate long component names for mobile
-  const abbreviateName = (name: string): string => {
-    // Create a short version for mobile display
-    const words = name.split(' ')
-    if (words.length <= 2) return name
-    
-    // Take first letter of each word, then add key identifier
-    if (name.includes('Airway')) return 'Airway'
-    if (name.includes('Electrical')) return 'Elec Tx'
-    if (name.includes('CPR')) return 'CPR/AED'
-    if (name.includes('Simulation')) return 'Sim'
-    
-    return words.slice(0, 2).join(' ')
-  }
+  const sortedComponents = useMemo(() =>
+    [...components].sort((a, b) => a.component_order - b.component_order),
+    [components]
+  )
 
   return (
     <div className="overflow-x-auto scrollbar-hide">
       <div className="flex space-x-2 pb-2">
-        {components
-          .sort((a, b) => a.component_order - b.component_order)
+        {sortedComponents
           .map((component) => {
             const status = getComponentStatus(component.component_id)
             const isActive = activeComponentId === component.component_id
@@ -91,11 +82,11 @@ export default function ComponentTabs({
               >
                 {getStatusIcon(status)}
                 <span className="hidden sm:inline">{component.component_name}</span>
-                <span className="sm:hidden">{abbreviateName(component.component_name)}</span>
+                <span className="sm:hidden">{abbreviateComponentName(component.component_name)}</span>
               </button>
             )
           })}
       </div>
     </div>
   )
-}
+})

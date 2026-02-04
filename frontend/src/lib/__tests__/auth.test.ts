@@ -1,396 +1,218 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import type { Assessor } from '../../types/database'
-
-// Mock supabase
-vi.mock('../supabase', () => ({
-  supabase: {
-    from: vi.fn()
-  }
-}))
-
-// Import after mocks are set up
-import { hashPin, loginWithPin, fetchActiveAssessors } from '../auth'
-import { supabase } from '../supabase'
+import { loginWithPin, fetchActiveAssessors } from '../auth'
 
 describe('auth.ts', () => {
-  describe('hashPin', () => {
-    it('should hash a PIN using SHA-256', async () => {
-      const pin = '1234'
-      const hash = await hashPin(pin)
+  const mockAssessor: Assessor = {
+    assessor_id: 'A001',
+    name: 'John Doe',
+    email: 'john@example.com',
+    pin_hash: 'mockedhash123',
+    is_active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  }
 
-      expect(hash).toBeTruthy()
-      expect(typeof hash).toBe('string')
-      expect(hash.length).toBeGreaterThan(0)
-    })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-    it('should produce consistent hashes for the same PIN', async () => {
-      const pin = '5678'
-      const hash1 = await hashPin(pin)
-      const hash2 = await hashPin(pin)
-
-      expect(hash1).toBe(hash2)
-    })
-
-    it('should produce different hashes for different PINs', async () => {
-      const pin1 = '1234'
-      const pin2 = '5678'
-      const hash1 = await hashPin(pin1)
-      const hash2 = await hashPin(pin2)
-
-      expect(hash1).not.toBe(hash2)
-    })
-
-    it('should handle empty PIN', async () => {
-      const pin = ''
-      const hash = await hashPin(pin)
-
-      expect(hash).toBeTruthy()
-      expect(typeof hash).toBe('string')
-    })
-
-    it('should return hexadecimal string', async () => {
-      const pin = '9999'
-      const hash = await hashPin(pin)
-
-      // Check if hash contains only hex characters (0-9, a-f)
-      expect(/^[0-9a-f]+$/.test(hash)).toBe(true)
-    })
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe('loginWithPin', () => {
-    const mockAssessor: Assessor = {
-      assessor_id: 'A001',
-      name: 'John Doe',
-      email: 'john@example.com',
-      pin_hash: 'mockedhash123',
-      is_active: true,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z'
-    }
-
-    beforeEach(() => {
-      vi.clearAllMocks()
-    })
-
     it('should successfully login with valid credentials', async () => {
       const credentials = {
         assessorId: 'A001',
         pin: '1234'
       }
 
-      // Calculate the actual hash for the PIN
-      const hashedPin = await hashPin('1234')
-      
-      // Create mock assessor with the correct hash
-      const mockAssessorWithCorrectHash = {
-        ...mockAssessor,
-        pin_hash: hashedPin
+      const mockResponse = {
+        success: true,
+        assessor: mockAssessor,
+        token: 'mock-token-123'
       }
 
-      // Mock supabase query
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockSingle = vi.fn().mockResolvedValue({
-        data: mockAssessorWithCorrectHash,
-        error: null
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        single: mockSingle
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
-
-      mockEq.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      } as Response)
 
       const result = await loginWithPin(credentials)
 
       expect(result.success).toBe(true)
-      expect(result.assessor).toEqual(mockAssessorWithCorrectHash)
+      expect(result.assessor).toEqual(mockAssessor)
+      expect(result.token).toBe('mock-token-123')
       expect(result.error).toBeUndefined()
-      expect(supabase.from).toHaveBeenCalledWith('assessors')
+      expect(global.fetch).toHaveBeenCalledWith('/worker/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assessorId: 'A001',
+          pin: '1234'
+        })
+      })
     })
 
-    it('should fail login when assessor not found', async () => {
-      const credentials = {
-        assessorId: 'A999',
-        pin: '1234'
-      }
-
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockSingle = vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' }
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        single: mockSingle
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
-
-      mockEq.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
-
-      const result = await loginWithPin(credentials)
-
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Assessor not found or inactive')
-      expect(result.assessor).toBeUndefined()
-    })
-
-    it('should fail login with invalid PIN', async () => {
+    it('should fail login with invalid credentials', async () => {
       const credentials = {
         assessorId: 'A001',
         pin: 'wrong'
       }
 
-      // Use a different hash in the mock assessor
+      const mockResponse = {
+        success: false,
+        error: 'Invalid credentials'
+      }
 
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockSingle = vi.fn().mockResolvedValue({
-        data: mockAssessor,
-        error: null
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        single: mockSingle
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
-
-      mockEq.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => mockResponse
+      } as Response)
 
       const result = await loginWithPin(credentials)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Invalid PIN')
+      expect(result.error).toBe('Invalid credentials')
       expect(result.assessor).toBeUndefined()
+      expect(result.token).toBeUndefined()
     })
 
-    it('should handle database errors gracefully', async () => {
+    it('should handle network errors gracefully', async () => {
       const credentials = {
         assessorId: 'A001',
         pin: '1234'
       }
 
-      // Suppress console.error for this test
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const mockSelect = vi.fn().mockImplementation(() => {
-        throw new Error('Database connection failed')
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect
-      } as any)
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 
       const result = await loginWithPin(credentials)
 
       expect(result.success).toBe(false)
       expect(result.error).toBe('Login failed. Please try again.')
       expect(result.assessor).toBeUndefined()
+      expect(result.token).toBeUndefined()
 
       consoleErrorSpy.mockRestore()
     })
 
-    it('should verify assessor is active', async () => {
+    it('should handle response with success false', async () => {
       const credentials = {
         assessorId: 'A001',
         pin: '1234'
       }
 
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockSingle = vi.fn().mockResolvedValue({
-        data: null,
-        error: null
-      })
+      const mockResponse = {
+        success: false,
+        error: 'Assessor not found'
+      }
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        single: mockSingle
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
-
-      mockEq.mockReturnValue({
-        eq: mockEq,
-        single: mockSingle
-      })
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      } as Response)
 
       const result = await loginWithPin(credentials)
 
       expect(result.success).toBe(false)
-      expect(mockEq).toHaveBeenCalledWith('is_active', true)
+      expect(result.error).toBe('Assessor not found')
+    })
+
+    it('should use default error message when none provided', async () => {
+      const credentials = {
+        assessorId: 'A001',
+        pin: '1234'
+      }
+
+      const mockResponse = {
+        success: false
+      }
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => mockResponse
+      } as Response)
+
+      const result = await loginWithPin(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Login failed')
     })
   })
 
   describe('fetchActiveAssessors', () => {
-    beforeEach(() => {
-      vi.clearAllMocks()
-    })
-
     it('should fetch and return active assessors', async () => {
-      const mockAssessors: Assessor[] = [
+      const mockAssessors = [
         {
           assessor_id: 'A001',
-          name: 'Alice Smith',
-          email: 'alice@example.com',
-          pin_hash: 'hash1',
-          is_active: true,
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z'
+          name: 'Alice Smith'
         },
         {
           assessor_id: 'A002',
-          name: 'Bob Jones',
-          email: 'bob@example.com',
-          pin_hash: 'hash2',
-          is_active: true,
-          created_at: '2024-01-02T00:00:00Z',
-          updated_at: '2024-01-02T00:00:00Z'
+          name: 'Bob Jones'
         }
       ]
 
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockOrder = vi.fn().mockResolvedValue({
-        data: mockAssessors,
-        error: null
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        order: mockOrder
-      })
-
-      mockEq.mockReturnValue({
-        order: mockOrder
-      })
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockAssessors
+      } as Response)
 
       const result = await fetchActiveAssessors()
 
-      expect(result).toEqual(mockAssessors)
-      expect(supabase.from).toHaveBeenCalledWith('assessors')
-      expect(mockEq).toHaveBeenCalledWith('is_active', true)
-      expect(mockOrder).toHaveBeenCalledWith('name', { ascending: true })
+      expect(result.data).toEqual(mockAssessors)
+      expect(result.error).toBeNull()
+      expect(global.fetch).toHaveBeenCalledWith('/worker/api/auth/assessors')
     })
 
-    it('should return empty array on error', async () => {
-      // Suppress console.error for this test
+    it('should handle failed response', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockOrder = vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' }
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder
-      } as any)
-
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        order: mockOrder
-      })
-
-      mockEq.mockReturnValue({
-        order: mockOrder
-      })
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false
+      } as Response)
 
       const result = await fetchActiveAssessors()
 
-      expect(result).toEqual([])
+      expect(result.data).toEqual([])
+      expect(result.error).toBe('Failed to load assessors')
 
       consoleErrorSpy.mockRestore()
     })
 
-    it('should handle exceptions and return empty array', async () => {
-      // Suppress console.error for this test
+    it('should handle network errors', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const mockSelect = vi.fn().mockImplementation(() => {
-        throw new Error('Network error')
-      })
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect
-      } as any)
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 
       const result = await fetchActiveAssessors()
 
-      expect(result).toEqual([])
+      expect(result.data).toEqual([])
+      expect(result.error).toBe('Failed to load assessors')
 
       consoleErrorSpy.mockRestore()
     })
 
-    it('should order assessors by name ascending', async () => {
-      const mockSelect = vi.fn().mockReturnThis()
-      const mockEq = vi.fn().mockReturnThis()
-      const mockOrder = vi.fn().mockResolvedValue({
-        data: [],
-        error: null
-      })
+    it('should handle JSON parse errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder
-      } as any)
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new Error('Invalid JSON')
+        }
+      } as Response)
 
-      mockSelect.mockReturnValue({
-        eq: mockEq,
-        order: mockOrder
-      })
+      const result = await fetchActiveAssessors()
 
-      mockEq.mockReturnValue({
-        order: mockOrder
-      })
+      expect(result.data).toEqual([])
+      expect(result.error).toBe('Failed to load assessors')
 
-      await fetchActiveAssessors()
-
-      expect(mockOrder).toHaveBeenCalledWith('name', { ascending: true })
+      consoleErrorSpy.mockRestore()
     })
   })
 })

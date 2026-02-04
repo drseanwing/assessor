@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
 import type { Participant, Course } from '../types/database'
+import { getRoleBadgeColor, formatRole } from '../lib/formatting'
 
 export default function ParticipantListPage() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -77,23 +78,6 @@ export default function ParticipantListPage() {
 
   const handleBack = () => {
     navigate('/courses')
-  }
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'TEAM_LEADER':
-        return 'bg-redi-navy/10 text-redi-navy'
-      case 'TEAM_MEMBER':
-        return 'bg-redi-teal/10 text-redi-teal'
-      case 'BOTH':
-        return 'bg-redi-sky/10 text-redi-sky'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const formatRole = (role: string) => {
-    return role.replaceAll('_', ' ')
   }
 
   return (

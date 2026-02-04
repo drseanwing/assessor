@@ -20,7 +20,7 @@ reportsRouter.post(
       console.error("Report generation failed:", err);
       res.status(500).json({
         success: false,
-        error: err instanceof Error ? err.message : String(err),
+        error: "An internal error occurred",
       });
     }
   }
@@ -37,7 +37,7 @@ reportsRouter.post(
       console.error("Report generation and send failed:", err);
       res.status(500).json({
         success: false,
-        error: err instanceof Error ? err.message : String(err),
+        error: "An internal error occurred",
       });
     }
   }
@@ -51,7 +51,7 @@ reportsRouter.post("/daily", async (_req: Request, res: Response) => {
     console.error("Daily reports failed:", err);
     res.status(500).json({
       success: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "An internal error occurred",
     });
   }
 });
@@ -64,7 +64,7 @@ reportsRouter.get("/list", async (_req: Request, res: Response) => {
     console.error("Report listing failed:", err);
     res.status(500).json({
       success: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: "An internal error occurred",
     });
   }
 });

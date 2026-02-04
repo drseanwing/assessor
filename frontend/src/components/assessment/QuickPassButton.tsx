@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface QuickPassButtonProps {
   onQuickPass: () => void
@@ -6,18 +6,27 @@ interface QuickPassButtonProps {
   disabled?: boolean
 }
 
-export default function QuickPassButton({ 
-  onQuickPass, 
-  isQuickPassed, 
-  disabled = false 
+export default function QuickPassButton({
+  onQuickPass,
+  isQuickPassed,
+  disabled = false
 }: QuickPassButtonProps) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleClick = () => {
     if (disabled) return
     setIsAnimating(true)
     onQuickPass()
-    setTimeout(() => setIsAnimating(false), 300)
+    timeoutRef.current = setTimeout(() => setIsAnimating(false), 300)
   }
 
   return (

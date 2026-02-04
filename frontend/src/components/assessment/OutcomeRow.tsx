@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { TemplateOutcome, BondyScore, BinaryScore, AssessmentRole } from '../../types/database'
 import BondySelector from './BondySelector'
+import { getRoleBadgeColor } from '../../lib/formatting'
 
 interface OutcomeRowProps {
   outcome: TemplateOutcome
@@ -22,23 +23,10 @@ export default memo(function OutcomeRow({
   disabled = false
 }: OutcomeRowProps) {
   // Check if this outcome applies to the participant's role
-  const isApplicable = 
-    outcome.applies_to === 'BOTH' || 
+  const isApplicable =
+    outcome.applies_to === 'BOTH' ||
     outcome.applies_to === participantRole ||
     participantRole === 'BOTH'
-
-  const getRoleBadgeColor = (role: AssessmentRole) => {
-    switch (role) {
-      case 'TEAM_LEADER':
-        return 'bg-redi-navy/10 text-redi-navy'
-      case 'TEAM_MEMBER':
-        return 'bg-redi-teal/10 text-redi-teal'
-      case 'BOTH':
-        return 'bg-redi-sky/10 text-redi-sky'
-      default:
-        return 'bg-gray-100 text-gray-600'
-    }
-  }
 
   const getRoleBadgeText = (role: AssessmentRole) => {
     switch (role) {

@@ -1,22 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { 
-  initDB, 
-  getPendingChanges, 
+import {
+  initDB,
+  getPendingChanges,
   getPendingChangeCount,
   removePendingChange,
   incrementRetryCount,
   addPendingChange
 } from '../lib/db'
-
-interface PendingChange {
-  id: string
-  type: 'assessment' | 'score' | 'overall'
-  action: 'create' | 'update'
-  data: Record<string, unknown>
-  timestamp: number
-  retryCount: number
-}
+import type { PendingChange } from '../types/shared'
 
 interface UseOfflineSyncReturn {
   isOnline: boolean
