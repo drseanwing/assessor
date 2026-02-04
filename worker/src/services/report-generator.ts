@@ -377,7 +377,7 @@ function generateCsv(data: ReportData): string {
 function csvRow(values: string[]): string {
   return values
     .map((v) => {
-      if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+      if (v.includes(",") || v.includes('"') || v.includes("\n") || v.includes("\r")) {
         return `"${v.replace(/"/g, '""')}"`;
       }
       return v;

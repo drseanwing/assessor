@@ -15,9 +15,9 @@ export default memo(function BondySelector({ value, onChange, disabled = false }
       case 'INDEPENDENT':
         return 'bg-green-500 text-white'
       case 'SUPERVISED':
-        return 'bg-lime-500 text-white'
+        return 'bg-lime-600 text-white'
       case 'ASSISTED':
-        return 'bg-yellow-500 text-white'
+        return 'bg-yellow-500 text-gray-900'
       case 'MARGINAL':
         return 'bg-orange-500 text-white'
       case 'NOT_OBSERVED':
@@ -47,6 +47,7 @@ export default memo(function BondySelector({ value, onChange, disabled = false }
             `}
             title={`${option.label}: ${option.description}`}
             aria-label={option.label}
+            aria-pressed={isSelected}
           >
             {option.shortLabel}
           </button>

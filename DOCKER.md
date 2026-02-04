@@ -36,17 +36,17 @@ The following ports are used to avoid conflicts with other services:
 
 3. **Start all services**:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Check service health**:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 5. **View logs**:
    ```bash
-   docker-compose logs -f
+   docker compose logs -f
    ```
 
 ## Accessing Services
@@ -68,33 +68,33 @@ Password: Value of `POSTGRES_PASSWORD` from `.env`
 
 ### Start services
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Stop services
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Stop and remove volumes (WARNING: Deletes all data)
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Restart a specific service
 ```bash
-docker-compose restart frontend
+docker compose restart frontend
 ```
 
 ### View logs for a specific service
 ```bash
-docker-compose logs -f postgres
-docker-compose logs -f frontend
+docker compose logs -f postgres
+docker compose logs -f frontend
 ```
 
 ### Rebuild the frontend after code changes
 ```bash
-docker-compose up -d --build frontend
+docker compose up -d --build frontend
 ```
 
 ## Initial Setup
@@ -135,28 +135,28 @@ Before deploying to production:
 
 Check logs for specific service:
 ```bash
-docker-compose logs postgres
-docker-compose logs kong
+docker compose logs postgres
+docker compose logs kong
 ```
 
 ### Database connection errors
 
 1. Ensure PostgreSQL is healthy:
    ```bash
-   docker-compose ps postgres
+   docker compose ps postgres
    ```
 
 2. Check PostgreSQL logs:
    ```bash
-   docker-compose logs postgres
+   docker compose logs postgres
    ```
 
 ### Frontend build issues
 
 Rebuild with no cache:
 ```bash
-docker-compose build --no-cache frontend
-docker-compose up -d frontend
+docker compose build --no-cache frontend
+docker compose up -d frontend
 ```
 
 ### Port conflicts
@@ -170,8 +170,8 @@ POSTGRES_PORT=8386
 
 Then restart:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ## Architecture
@@ -215,12 +215,12 @@ Data is persisted in Docker volumes:
 
 To back up the database:
 ```bash
-docker-compose exec postgres pg_dump -U postgres redi_assessment > backup.sql
+docker compose exec postgres pg_dump -U postgres redi_assessment > backup.sql
 ```
 
 To restore from backup:
 ```bash
-docker-compose exec -T postgres psql -U postgres redi_assessment < backup.sql
+docker compose exec -T postgres psql -U postgres redi_assessment < backup.sql
 ```
 
 ## Development Workflow
@@ -228,7 +228,7 @@ docker-compose exec -T postgres psql -U postgres redi_assessment < backup.sql
 1. Make code changes in `frontend/`
 2. Rebuild and restart frontend:
    ```bash
-   docker-compose up -d --build frontend
+   docker compose up -d --build frontend
    ```
 3. Test changes at http://localhost:7385
 
@@ -236,13 +236,13 @@ For database schema changes:
 1. Update migration files in `supabase/migrations/`
 2. Recreate database:
    ```bash
-   docker-compose down -v
-   docker-compose up -d
+   docker compose down -v
+   docker compose up -d
    ```
 
 ## Support
 
 For issues or questions:
-- Check the logs: `docker-compose logs -f`
+- Check the logs: `docker compose logs -f`
 - Review the main README.md for application documentation
 - Open an issue on GitHub

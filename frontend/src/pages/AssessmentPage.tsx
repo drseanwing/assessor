@@ -174,7 +174,7 @@ export default function AssessmentPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
           <div className="text-red-500 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -203,7 +203,7 @@ export default function AssessmentPage() {
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="Go back"
               >
-                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -247,7 +247,7 @@ export default function AssessmentPage() {
       </div>
       
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-4">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-4">
         {activeComponentId && (
           <>
             {/* Component Header with Quick Pass */}
@@ -265,23 +265,23 @@ export default function AssessmentPage() {
             <div className="mb-4 p-3 bg-gray-100 rounded-lg">
               <div className="flex flex-wrap gap-3 text-xs text-gray-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center font-semibold">I</span>
+                  <span className="w-6 h-6 rounded bg-green-500 text-white flex items-center justify-center font-semibold" aria-hidden="true">I</span>
                   Independent
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-lime-500 text-white flex items-center justify-center font-semibold">S</span>
+                  <span className="w-6 h-6 rounded bg-lime-600 text-white flex items-center justify-center font-semibold" aria-hidden="true">S</span>
                   Supervised
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-yellow-500 text-white flex items-center justify-center font-semibold">A</span>
+                  <span className="w-6 h-6 rounded bg-yellow-500 text-gray-900 flex items-center justify-center font-semibold" aria-hidden="true">A</span>
                   Assisted
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-semibold">M</span>
+                  <span className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-semibold" aria-hidden="true">M</span>
                   Marginal
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded bg-gray-500 text-white flex items-center justify-center font-semibold">N</span>
+                  <span className="w-6 h-6 rounded bg-gray-500 text-white flex items-center justify-center font-semibold" aria-hidden="true">N</span>
                   Not Obs
                 </span>
               </div>

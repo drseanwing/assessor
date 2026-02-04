@@ -621,8 +621,7 @@ npm run dev
 - Sample course for "2026-01-25" with 3 participants
 
 ### Security Considerations
-- PIN hashing is placeholder in development
-- Production should use bcrypt on backend
+- PIN authentication uses server-side bcrypt validation via the worker API. PINs are hashed with bcrypt (10 rounds) and compared server-side.
 - RLS policies are basic - refine for production
 - Session tokens stored in localStorage
 - HTTPS required for production

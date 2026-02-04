@@ -84,7 +84,7 @@ From the participant list page, click the **Dashboard** button to view a complet
 ### Understand the Status Colors
 The dashboard uses color-coded cells to show assessment status:
 - **Green** = Component assessment complete and passed
-- **Yellow** = Component assessment in progress
+- **Teal/Blue** = Component assessment in progress
 - **Gray** = Component assessment not started
 - **Orange** = Issues detected (marginal or not observed scores on mandatory outcomes)
 
@@ -165,7 +165,7 @@ You may be logged out if you close the browser or after an extended period of in
 
 - **Browser:** Modern web browser (Chrome, Firefox, Safari, Edge)
 - **Mobile Devices:** Fully supported - the system is mobile-first responsive
-- **Internet Connection:** Required for real-time sync (offline data entry coming soon)
+- **Internet Connection:** Required for real-time sync (basic offline data entry is available with automatic sync on reconnection)
 - **Touch Targets:** All buttons are sized for easy touch interaction (minimum 44px)
 
 ---

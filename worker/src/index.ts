@@ -23,14 +23,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '100kb' }));
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', apiLimiter);
-
 app.get("/api/health", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -42,6 +34,14 @@ app.get("/api/health", async (_req, res) => {
     });
   }
 });
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 app.use("/api/auth", authRouter);
 app.use("/api/sync", authMiddleware, syncRouter);

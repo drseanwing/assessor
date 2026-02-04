@@ -10,6 +10,9 @@ import { ErrorBoundary } from './components/common'
 function App() {
   return (
     <BrowserRouter>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-redi-navy focus:rounded focus:shadow-lg">
+        Skip to main content
+      </a>
       <ErrorBoundary>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

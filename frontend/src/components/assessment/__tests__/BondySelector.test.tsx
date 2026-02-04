@@ -50,7 +50,7 @@ describe('BondySelector', () => {
       render(<BondySelector value="SUPERVISED" onChange={mockOnChange} />)
 
       const supervisedButton = screen.getByLabelText('Supervised')
-      expect(supervisedButton).toHaveClass('bg-lime-500')
+      expect(supervisedButton).toHaveClass('bg-lime-600')
       expect(supervisedButton).toHaveClass('ring-2')
     })
 
@@ -104,7 +104,7 @@ describe('BondySelector', () => {
       rerender(<BondySelector value="SUPERVISED" onChange={mockOnChange} />)
 
       const supervisedButtonAfter = screen.getByLabelText('Supervised')
-      expect(supervisedButtonAfter).toHaveClass('bg-lime-500')
+      expect(supervisedButtonAfter).toHaveClass('bg-lime-600')
       expect(supervisedButtonAfter).toHaveClass('ring-2')
     })
 
@@ -226,7 +226,7 @@ describe('BondySelector', () => {
       render(<BondySelector value="SUPERVISED" onChange={mockOnChange} />)
 
       const button = screen.getByLabelText('Supervised')
-      expect(button).toHaveClass('bg-lime-500')
+      expect(button).toHaveClass('bg-lime-600')
       expect(button).toHaveClass('text-white')
     })
 
@@ -235,7 +235,7 @@ describe('BondySelector', () => {
 
       const button = screen.getByLabelText('Assisted')
       expect(button).toHaveClass('bg-yellow-500')
-      expect(button).toHaveClass('text-white')
+      expect(button).toHaveClass('text-gray-900')
     })
 
     it('should apply correct color for MARGINAL', () => {

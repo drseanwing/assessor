@@ -91,7 +91,8 @@ const initialState = {
   activeComponentId: null,
   saveStatus: 'idle' as const,
   lastSaved: null,
-  loadError: null
+  loadError: null,
+  isSaving: false
 }
 
 export const useAssessmentStore = create<AssessmentState>((set, get) => ({
@@ -295,6 +296,16 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
             isDirty: true
           }
         }
+
+        // Also handle binary outcomes for quick pass
+        if (outcome.outcome_type === 'BINARY' && outcome.is_mandatory && applies) {
+          newScores[outcome.outcome_id] = {
+            outcomeId: outcome.outcome_id,
+            bondyScore: null,
+            binaryScore: 'PASS',
+            isDirty: true
+          }
+        }
       }
       
       return {
@@ -377,13 +388,15 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       }
 
       timeoutId = setTimeout(async () => {
+        if (get().isSaving) return
+
         const { participant, componentAssessments, overallAssessment } = get()
         if (!participant) return
 
         const assessorId = useAuthStore.getState().assessor?.assessor_id || null
-        
-        set({ saveStatus: 'saving' })
-        
+
+        set({ saveStatus: 'saving', isSaving: true })
+
         try {
           // Save component assessments
           const savedComponentIds: string[] = []
@@ -532,6 +545,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
         } catch (error) {
           console.error('Error saving assessments:', error)
           set({ saveStatus: 'error' })
+        } finally {
+          set({ isSaving: false })
         }
       }, 1000) // 1 second debounce
     }

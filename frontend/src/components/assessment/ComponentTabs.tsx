@@ -62,7 +62,7 @@ export default memo(function ComponentTabs({
 
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      <div className="flex space-x-2 pb-2">
+      <div className="flex space-x-2 pb-2" role="tablist">
         {sortedComponents
           .map((component) => {
             const status = getComponentStatus(component.component_id)
@@ -72,6 +72,8 @@ export default memo(function ComponentTabs({
               <button
                 key={component.component_id}
                 onClick={() => onSelectComponent(component.component_id)}
+                role="tab"
+                aria-selected={isActive}
                 className={`
                   flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm
                   flex items-center space-x-2

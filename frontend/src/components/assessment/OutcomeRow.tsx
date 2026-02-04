@@ -91,11 +91,12 @@ export default memo(function OutcomeRow({
                 className={`
                   px-4 py-2 rounded-lg font-medium text-sm
                   transition-all duration-150
-                  ${binaryScore === 'PASS' 
-                    ? 'bg-green-500 text-white ring-2 ring-offset-2 ring-green-400' 
+                  ${binaryScore === 'PASS'
+                    ? 'bg-green-500 text-white ring-2 ring-offset-2 ring-green-400'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
                   ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
                 `}
+                aria-pressed={binaryScore === 'PASS'}
               >
                 Pass
               </button>
@@ -106,11 +107,12 @@ export default memo(function OutcomeRow({
                 className={`
                   px-4 py-2 rounded-lg font-medium text-sm
                   transition-all duration-150
-                  ${binaryScore === 'FAIL' 
-                    ? 'bg-red-500 text-white ring-2 ring-offset-2 ring-red-400' 
+                  ${binaryScore === 'FAIL'
+                    ? 'bg-red-500 text-white ring-2 ring-offset-2 ring-red-400'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
                   ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
                 `}
+                aria-pressed={binaryScore === 'FAIL'}
               >
                 Fail
               </button>

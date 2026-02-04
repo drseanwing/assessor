@@ -1,7 +1,7 @@
 # GitHub Copilot Instructions
 
 ## Project Context
-[Same project overview as CLAUDE.md]
+REdI Assessment System - A real-time multi-assessor competency evaluation platform for Queensland Health's Resuscitation Education Initiative. Built with React 19, TypeScript, Vite (frontend) and Express, PostgreSQL 16, PostgREST (backend). Docker-based deployment with nginx reverse proxy.
 
 ## Coding Standards
 

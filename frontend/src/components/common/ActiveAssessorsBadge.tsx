@@ -1,4 +1,5 @@
 import type { PresenceInfo } from '../../types/shared'
+import { useAuthStore } from '../../stores/authStore'
 
 interface ActiveAssessorsBadgeProps {
   assessors: PresenceInfo[]
@@ -6,16 +7,19 @@ interface ActiveAssessorsBadgeProps {
   currentComponentId?: string
 }
 
-export default function ActiveAssessorsBadge({ 
-  assessors, 
+export default function ActiveAssessorsBadge({
+  assessors,
   currentParticipantId,
-  currentComponentId 
+  currentComponentId
 }: ActiveAssessorsBadgeProps) {
+  const currentAssessorId = useAuthStore(state => state.assessor?.assessor_id)
+
   // Filter to only show assessors actively editing this participant/component
   const activeHere = assessors.filter(a => {
     if (currentParticipantId && a.participantId !== currentParticipantId) return false
     if (currentComponentId && a.componentId && a.componentId !== currentComponentId) return false
-    
+    if (a.assessorId === currentAssessorId) return false
+
     // Check if active in last 30 seconds
     const lastSeen = new Date(a.lastSeen)
     const now = new Date()

@@ -90,7 +90,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-redi-light-teal/20 to-redi-navy/10 px-4">
-      <div className="max-w-md w-full">
+      <main className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-display text-redi-navy mb-2 tracking-wide">
@@ -122,6 +122,7 @@ export default function LoginPage() {
                 onChange={(e) => setSelectedAssessor(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-redi-teal focus:border-transparent"
                 disabled={loading || assessors.length === 0}
+                aria-required="true"
               >
                 {assessors.length === 0 && !assessorLoadError ? (
                   <option value="">Loading assessors...</option>
@@ -168,12 +169,14 @@ export default function LoginPage() {
                 disabled={loading}
                 maxLength={4}
                 autoComplete="off"
+                aria-required="true"
+                aria-describedby={error ? 'pin-error' : undefined}
               />
             </div>
 
             {/* Error Message */}
             {error && (
-              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div id="pin-error" role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -202,7 +205,7 @@ export default function LoginPage() {
         <div className="text-center mt-6 text-sm text-redi-navy/60">
           <p>Queensland Health - Resuscitation Education Initiative</p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
