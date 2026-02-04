@@ -24,7 +24,6 @@ export default function ParticipantListPage() {
   const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [engagementScores, setEngagementScores] = useState<Record<string, number>>({})
-  const [componentNames, setComponentNames] = useState<Array<{ id: string; name: string }>>([])
   const [participantStatuses, setParticipantStatuses] = useState<Record<string, ComponentStatusInfo[]>>({})
 
   const loadCourseData = useCallback(async () => {
@@ -74,7 +73,6 @@ export default function ParticipantListPage() {
         }
 
         const components = (componentsRes.data || []) as TemplateComponent[]
-        setComponentNames(components.map(c => ({ id: c.component_id, name: c.component_name })))
 
         if (components.length > 0) {
           const componentIds = components.map(c => c.component_id)
