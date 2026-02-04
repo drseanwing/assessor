@@ -91,15 +91,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-redi-light-teal/20 to-redi-navy/10 px-4">
       <main className="max-w-md w-full">
-        {/* Header */}
+        {/* Header with Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-display text-redi-navy mb-2 tracking-wide">
-            REdI Assess
-          </h1>
-          <p className="text-redi-navy/70">
+          <img
+            src="/redi-logo.png"
+            alt="REdI - Resuscitation EDucation Initiative"
+            className="mx-auto h-32 w-auto rounded-lg mb-4"
+          />
+          <p className="text-lg font-semibold text-redi-navy tracking-wide">
             Competency Assessment System
           </p>
         </div>
+
+        {/* Brand Gradient Bar */}
+        <div className="h-1.5 rounded-full bg-gradient-to-r from-redi-lime via-redi-teal to-redi-navy mb-6" />
 
         {/* Login Card */}
         <div className="bg-white rounded-lg shadow-xl p-8">
