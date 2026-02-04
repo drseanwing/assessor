@@ -44,6 +44,7 @@ interface AssessmentState {
   
   // UI state
   activeComponentId: string | null
+  isSaving: boolean
   saveStatus: 'idle' | 'saving' | 'saved' | 'error'
   lastSaved: Date | null
   loadError: string | null
