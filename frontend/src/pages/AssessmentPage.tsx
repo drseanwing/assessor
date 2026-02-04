@@ -23,7 +23,6 @@ export default function AssessmentPage() {
   
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showOverallTab, setShowOverallTab] = useState(false)
   
   const {
     participant,
@@ -43,7 +42,6 @@ export default function AssessmentPage() {
     setBinaryScore,
     applyQuickPass,
     setComponentFeedback,
-    setOverallFeedback,
     setEngagementScore,
     getComponentStatus,
     reset
@@ -238,32 +236,18 @@ export default function AssessmentPage() {
       {/* Component Tabs */}
       <div className="bg-white border-b border-gray-200 sticky top-[72px] z-10">
         <div className="max-w-4xl mx-auto px-4 py-2">
-          <div className="flex gap-2">
-            <div className="flex-1 min-w-0">
-              <ComponentTabs
-                components={components}
-                activeComponentId={showOverallTab ? null : activeComponentId}
-                onSelectComponent={(id) => { setShowOverallTab(false); setActiveComponent(id) }}
-                getComponentStatus={getComponentStatus}
-              />
-            </div>
-            <button
-              onClick={() => setShowOverallTab(true)}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
-                showOverallTab
-                  ? 'bg-redi-navy text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:shadow-sm'
-              }`}
-            >
-              Overall
-            </button>
-          </div>
+          <ComponentTabs
+            components={components}
+            activeComponentId={activeComponentId}
+            onSelectComponent={setActiveComponent}
+            getComponentStatus={getComponentStatus}
+          />
         </div>
       </div>
       
       {/* Main Content */}
       <main id="main-content" className="max-w-4xl mx-auto px-4 py-4">
-        {!showOverallTab && activeComponentId && (
+        {activeComponentId && (
           <>
             {/* Component Header with Quick Pass */}
             <div className="flex items-center justify-between mb-4">
@@ -326,15 +310,8 @@ export default function AssessmentPage() {
                 placeholder="Enter feedback for this component..."
               />
             </div>
-          </>
-        )}
 
-        {/* Overall Assessment Tab */}
-        {showOverallTab && (
-          <div>
-            <h2 className="text-lg font-semibold text-redi-navy mb-4">Overall Assessment</h2>
-
-            {/* Engagement Score */}
+            {/* Engagement Score - appears on every component, updates single value */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Engagement Level
@@ -342,16 +319,6 @@ export default function AssessmentPage() {
               <EngagementSelector
                 value={overallAssessment.engagementScore}
                 onChange={setEngagementScore}
-              />
-            </div>
-
-            {/* Overall Feedback */}
-            <div className="mb-6">
-              <FeedbackInput
-                value={overallAssessment.feedback}
-                onChange={setOverallFeedback}
-                label="Overall Feedback"
-                placeholder="Enter overall feedback for this participant..."
               />
             </div>
 
@@ -365,7 +332,7 @@ export default function AssessmentPage() {
               </svg>
               View Feedback Report
             </button>
-          </div>
+          </>
         )}
       </main>
       
