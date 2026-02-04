@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import CourseListPage from './pages/CourseListPage'
 import ParticipantListPage from './pages/ParticipantListPage'
 import AssessmentPage from './pages/AssessmentPage'
+import FeedbackReportPage from './pages/FeedbackReportPage'
 import CourseDashboardPage from './pages/CourseDashboardPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { ErrorBoundary } from './components/common'
@@ -46,6 +47,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AssessmentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/course/:courseId/participant/:participantId/report"
+            element={
+              <ProtectedRoute>
+                <FeedbackReportPage />
               </ProtectedRoute>
             }
           />

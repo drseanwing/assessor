@@ -256,17 +256,17 @@ export default function DashboardGrid({
       {/* Legend */}
       <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 print:border-gray-300">
         <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
-          <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-green-500"></span> Complete
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-gray-300"></span> Not Started
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-redi-teal"></span> In Progress
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-yellow-400"></span> Incomplete
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-gray-300"></span> Not Started
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-green-500"></span> Pass
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full bg-orange-500"></span> Issues
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-red-500"></span> Fail
           </span>
         </div>
       </div>

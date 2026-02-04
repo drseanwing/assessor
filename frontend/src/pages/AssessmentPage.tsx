@@ -23,6 +23,7 @@ export default function AssessmentPage() {
   
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showOverallTab, setShowOverallTab] = useState(false)
   
   const {
     participant,
@@ -237,18 +238,32 @@ export default function AssessmentPage() {
       {/* Component Tabs */}
       <div className="bg-white border-b border-gray-200 sticky top-[72px] z-10">
         <div className="max-w-4xl mx-auto px-4 py-2">
-          <ComponentTabs
-            components={components}
-            activeComponentId={activeComponentId}
-            onSelectComponent={setActiveComponent}
-            getComponentStatus={getComponentStatus}
-          />
+          <div className="flex gap-2">
+            <div className="flex-1 min-w-0">
+              <ComponentTabs
+                components={components}
+                activeComponentId={showOverallTab ? null : activeComponentId}
+                onSelectComponent={(id) => { setShowOverallTab(false); setActiveComponent(id) }}
+                getComponentStatus={getComponentStatus}
+              />
+            </div>
+            <button
+              onClick={() => setShowOverallTab(true)}
+              className={`flex-shrink-0 px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 ${
+                showOverallTab
+                  ? 'bg-redi-navy text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:shadow-sm'
+              }`}
+            >
+              Overall
+            </button>
+          </div>
         </div>
       </div>
       
       {/* Main Content */}
       <main id="main-content" className="max-w-4xl mx-auto px-4 py-4">
-        {activeComponentId && (
+        {!showOverallTab && activeComponentId && (
           <>
             {/* Component Header with Quick Pass */}
             <div className="flex items-center justify-between mb-4">
@@ -260,7 +275,7 @@ export default function AssessmentPage() {
                 isQuickPassed={activeAssessment?.isQuickPassed || false}
               />
             </div>
-            
+
             {/* Bondy Scale Legend */}
             <div className="mb-4 p-3 bg-gray-100 rounded-lg">
               <div className="flex flex-wrap gap-3 text-xs text-gray-600">
@@ -286,7 +301,7 @@ export default function AssessmentPage() {
                 </span>
               </div>
             </div>
-            
+
             {/* Outcomes List */}
             <div className="space-y-2 mb-6">
               {sortedOutcomes.map((outcome) => (
@@ -301,7 +316,7 @@ export default function AssessmentPage() {
                   />
                 ))}
             </div>
-            
+
             {/* Component Feedback */}
             <div className="mb-6">
               <FeedbackInput
@@ -313,30 +328,45 @@ export default function AssessmentPage() {
             </div>
           </>
         )}
-        
-        {/* Overall Assessment Section */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-redi-navy mb-4">Overall Assessment</h2>
-          
-          {/* Engagement Score */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Engagement Level
-            </label>
-            <EngagementSelector
-              value={overallAssessment.engagementScore}
-              onChange={setEngagementScore}
-            />
+
+        {/* Overall Assessment Tab */}
+        {showOverallTab && (
+          <div>
+            <h2 className="text-lg font-semibold text-redi-navy mb-4">Overall Assessment</h2>
+
+            {/* Engagement Score */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Engagement Level
+              </label>
+              <EngagementSelector
+                value={overallAssessment.engagementScore}
+                onChange={setEngagementScore}
+              />
+            </div>
+
+            {/* Overall Feedback */}
+            <div className="mb-6">
+              <FeedbackInput
+                value={overallAssessment.feedback}
+                onChange={setOverallFeedback}
+                label="Overall Feedback"
+                placeholder="Enter overall feedback for this participant..."
+              />
+            </div>
+
+            {/* Link to Feedback Report */}
+            <button
+              onClick={() => navigate(`/course/${courseId}/participant/${participantId}/report`)}
+              className="flex items-center gap-2 text-sm font-medium text-redi-teal hover:text-redi-teal-dark transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              View Feedback Report
+            </button>
           </div>
-          
-          {/* Overall Feedback */}
-          <FeedbackInput
-            value={overallAssessment.feedback}
-            onChange={setOverallFeedback}
-            label="Overall Feedback"
-            placeholder="Enter overall feedback for this participant..."
-          />
-        </div>
+        )}
       </main>
       
       {/* Bottom Navigation (Mobile) */}

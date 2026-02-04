@@ -60,35 +60,40 @@ export default memo(function ComponentTabs({
     [components]
   )
 
+  const colCount = sortedComponents.length || 4
+
   return (
-    <div className="overflow-x-auto scrollbar-hide">
-      <div className="flex space-x-2 pb-2" role="tablist">
-        {sortedComponents
-          .map((component) => {
-            const status = getComponentStatus(component.component_id)
-            const isActive = activeComponentId === component.component_id
-            
-            return (
-              <button
-                key={component.component_id}
-                onClick={() => onSelectComponent(component.component_id)}
-                role="tab"
-                aria-selected={isActive}
-                className={`
-                  flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm
-                  flex items-center space-x-2
-                  transition-all duration-200
-                  ${getStatusColor(status, isActive)}
-                  ${isActive ? 'shadow-md' : 'hover:shadow-sm'}
-                `}
-              >
-                {getStatusIcon(status)}
-                <span className="hidden sm:inline">{component.component_name}</span>
-                <span className="sm:hidden">{abbreviateComponentName(component.component_name)}</span>
-              </button>
-            )
-          })}
-      </div>
+    <div
+      className="grid gap-2 pb-2"
+      style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+      role="tablist"
+    >
+      {sortedComponents
+        .map((component) => {
+          const status = getComponentStatus(component.component_id)
+          const isActive = activeComponentId === component.component_id
+
+          return (
+            <button
+              key={component.component_id}
+              onClick={() => onSelectComponent(component.component_id)}
+              role="tab"
+              aria-selected={isActive}
+              className={`
+                w-full px-2 py-2 rounded-lg font-medium text-xs sm:text-sm
+                flex items-center justify-center gap-1.5
+                text-center whitespace-normal leading-tight
+                transition-all duration-200
+                ${getStatusColor(status, isActive)}
+                ${isActive ? 'shadow-md' : 'hover:shadow-sm'}
+              `}
+            >
+              {getStatusIcon(status)}
+              <span className="hidden sm:inline">{component.component_name}</span>
+              <span className="sm:hidden">{abbreviateComponentName(component.component_name)}</span>
+            </button>
+          )
+        })}
     </div>
   )
 })

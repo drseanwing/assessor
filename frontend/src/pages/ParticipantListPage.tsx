@@ -226,15 +226,26 @@ export default function ParticipantListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button 
-                          className="text-redi-coral hover:text-redi-coral-dark font-medium"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleParticipantClick(participant.participant_id)
-                          }}
-                        >
-                          Assess →
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="text-redi-coral hover:text-redi-coral-dark font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleParticipantClick(participant.participant_id)
+                            }}
+                          >
+                            Assess
+                          </button>
+                          <button
+                            className="text-redi-teal hover:text-redi-teal-dark font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/course/${courseId}/participant/${participant.participant_id}/report`)
+                            }}
+                          >
+                            Report
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

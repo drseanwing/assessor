@@ -63,8 +63,13 @@ export function useRealtime({
     const currentParticipantIds = JSON.parse(participantIdsKey)
 
     const connect = () => {
+      const token = useAuthStore.getState().token
+      if (!token) {
+        setConnectionStatus('disconnected')
+        return
+      }
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`)
 
       ws.onopen = () => {
         setConnectionStatus('connected')
@@ -129,9 +134,15 @@ export function useRealtime({
         }
       }
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         if (presenceIntervalRef.current) {
           clearInterval(presenceIntervalRef.current)
+        }
+
+        // Don't retry on auth failures
+        if (event.code === 4001 || event.code === 4003) {
+          setConnectionStatus('disconnected')
+          return
         }
 
         // Stop reconnecting after 10 failed attempts
