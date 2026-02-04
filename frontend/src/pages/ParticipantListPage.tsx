@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
 import type { Participant, Course } from '../types/database'
+import { ENGAGEMENT_OPTIONS } from '../types/database'
 import { getRoleBadgeColor, formatRole } from '../lib/formatting'
 
 export default function ParticipantListPage() {
@@ -16,6 +17,7 @@ export default function ParticipantListPage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
+  const [engagementScores, setEngagementScores] = useState<Record<string, number>>({})
 
   const loadCourseData = useCallback(async () => {
     setLoading(true)
@@ -42,6 +44,24 @@ export default function ParticipantListPage() {
       if (participantsError) throw participantsError
       setParticipants(participantsData || [])
       setFilteredParticipants(participantsData || [])
+
+      // Fetch engagement scores for all participants
+      const participantIds = (participantsData || []).map(p => p.participant_id)
+      if (participantIds.length > 0) {
+        const { data: overallData } = await supabase
+          .from('overall_assessments')
+          .select('participant_id, engagement_score')
+          .in('participant_id', participantIds)
+        if (overallData) {
+          const scores: Record<string, number> = {}
+          for (const row of overallData) {
+            if (row.engagement_score != null) {
+              scores[row.participant_id] = row.engagement_score
+            }
+          }
+          setEngagementScores(scores)
+        }
+      }
     } catch (err) {
       console.error('Error loading course data:', err)
       setError('Failed to load participants. Please try again.')
@@ -185,6 +205,9 @@ export default function ParticipantListPage() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Role
                     </th>
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Engagement
+                    </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Action
                     </th>
@@ -224,6 +247,15 @@ export default function ParticipantListPage() {
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(participant.assessment_role)}`}>
                           {formatRole(participant.assessment_role)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {engagementScores[participant.participant_id] != null ? (
+                          <span className="text-xl" title={ENGAGEMENT_OPTIONS.find(o => o.value === engagementScores[participant.participant_id])?.label}>
+                            {ENGAGEMENT_OPTIONS.find(o => o.value === engagementScores[participant.participant_id])?.emoji}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-3">
