@@ -1,3 +1,5 @@
+> **Note: This report is historical.** It was generated on January 27, 2026 during an automated validation run. Many of the critical and high-priority issues identified below have since been resolved, including: PIN authentication bypass (now uses server-side bcrypt), missing CI/CD pipeline (now has ci.yml and e2e.yml), Content-Security-Policy headers (added to nginx.conf), missing testing framework (Vitest and Playwright now configured), React hook dependency warnings (fixed), and Docker security improvements (non-root user, HEALTHCHECK added). Refer to PROGRESS.md for current status.
+
 # REdI Assessment System - Validation Report
 
 **Generated:** January 27, 2026

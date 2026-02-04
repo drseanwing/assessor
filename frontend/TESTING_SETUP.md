@@ -11,12 +11,12 @@ Comprehensive unit tests have been created for the REdI Assessment frontend usin
 - `src/test/setup.ts` - Test setup file with jest-dom matchers and global mocks
 
 ### Test Files
-1. **`src/lib/__tests__/auth.test.ts`** (103 tests)
-   - Tests for `hashPin()` function (5 tests)
-   - Tests for `loginWithPin()` function (6 tests)
-   - Tests for `fetchActiveAssessors()` function (4 tests)
+1. **`src/lib/__tests__/auth.test.ts`** (9 tests)
+   - Tests for PIN validation functions (3 tests)
+   - Tests for `loginWithPin()` function (4 tests)
+   - Tests for `fetchActiveAssessors()` function (2 tests)
 
-2. **`src/components/assessment/__tests__/BondySelector.test.tsx`** (27 tests)
+2. **`src/components/assessment/__tests__/BondySelector.test.tsx`** (25 tests)
    - Rendering tests (7 tests)
    - Interaction tests (4 tests)
    - Disabled state tests (3 tests)
@@ -24,7 +24,7 @@ Comprehensive unit tests have been created for the REdI Assessment frontend usin
    - Visual feedback tests (3 tests)
    - Color coding tests (7 tests)
 
-3. **`src/components/common/__tests__/ErrorBoundary.test.tsx`** (21 tests)
+3. **`src/components/common/__tests__/ErrorBoundary.test.tsx`** (23 tests)
    - Normal rendering tests (3 tests)
    - Error catching tests (4 tests)
    - Error UI tests (4 tests)
@@ -120,7 +120,7 @@ npm test:coverage
 npm test -- auth.test.ts
 
 # Run tests matching a pattern
-npm test -- --grep "hashPin"
+npm test -- --grep "login"
 ```
 
 ## Test Coverage
@@ -128,7 +128,7 @@ npm test -- --grep "hashPin"
 Current test implementation provides comprehensive coverage for:
 
 ### Authentication Module (`lib/auth.ts`)
-✅ SHA-256 PIN hashing algorithm
+✅ PIN hash validation (server-side bcrypt via worker API)
 ✅ Consistent hash generation
 ✅ Different hashes for different PINs
 ✅ Login with valid credentials
@@ -217,7 +217,7 @@ node --inspect-brk node_modules/.bin/vitest
 
 To extend test coverage:
 
-1. **Add tests for stores** (`src/store/`)
+1. **Add tests for stores** (`src/stores/`)
    - Test Zustand store actions and state updates
 
 2. **Add tests for remaining components**

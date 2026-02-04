@@ -30,7 +30,7 @@ This document tracks the implementation progress of the REdI Assessment System a
    - Files: `supabase/seed.sql`
 
 3. **React Project Setup** ✅
-   - Vite + React 18 + TypeScript
+   - Vite 7 + React 19 + TypeScript
    - Tailwind CSS v3 configured
    - Project structure established
    - Files: `frontend/` directory
@@ -305,10 +305,10 @@ All exit criteria have been met:
 **Status: Placeholder implemented - Requires Azure AD setup**
 
 1. **SharePoint Integration Module** 🔄
-   - Placeholder module created with documentation
+   - Placeholder module was planned but not created
    - Types defined for SharePoint data structures
    - Ready for implementation when Azure AD is configured
-   - Files: `frontend/src/lib/sharepoint.ts`
+   - Files: Placeholder removed/not created
 
 **Note:** Full implementation requires:
 - Azure AD application registration at https://portal.azure.com
@@ -357,7 +357,7 @@ All exit criteria have been met:
 
 - ✅ Offline support infrastructure ready
 - ✅ Deployment configurations created
-- ⏸️ E2E tests (requires Playwright setup)
+- ✅ E2E tests with Playwright
 - ⏸️ Performance testing (requires running environment)
 - ⏸️ Production deployment (requires Supabase instance)
 
@@ -421,7 +421,7 @@ All exit criteria have been met:
      - Real-time updates
      - Offline behavior
    - Configuration: `frontend/playwright.config.ts`
-   - Files: `frontend/tests/e2e/**/*.spec.ts`
+   - Files: `frontend/e2e/*.spec.ts`
 
 7. **GitHub Actions CI/CD Workflows** ✅
    - Created automated testing pipeline
@@ -432,7 +432,7 @@ All exit criteria have been met:
      - Run unit tests (Vitest)
      - Run E2E tests (Playwright)
      - Build optimization check
-   - Files: `.github/workflows/test.yml`, `.github/workflows/build.yml`
+   - Files: `.github/workflows/ci.yml`, `.github/workflows/e2e.yml`
 
 ## Technology Stack
 
@@ -449,7 +449,7 @@ All exit criteria have been met:
 - Vite 7 (build tool, fast HMR)
 - Tailwind CSS v3 (styling with REdI brand tokens)
 - Zustand (state management)
-- React Router v6 (routing)
+- React Router v7 (routing)
 - Supabase JS Client (database queries via PostgREST proxy)
 
 ### Development Tools
@@ -624,8 +624,7 @@ assessor/
 │   │   │   ├── supabase.ts
 │   │   │   ├── auth.ts
 │   │   │   ├── formatting.ts
-│   │   │   ├── db.ts
-│   │   │   └── sharepoint.ts
+│   │   │   └── db.ts
 │   │   ├── pages/
 │   │   │   ├── LoginPage.tsx
 │   │   │   ├── CourseListPage.tsx
@@ -660,7 +659,7 @@ assessor/
 ### Phase 5: SharePoint Integration (Requires External Setup)
 - Azure AD application registration required
 - SharePoint API permissions needed
-- Placeholder module at `frontend/src/lib/sharepoint.ts`
+- Placeholder module was planned but not created
 
 ### Phase 6: Additional Items (Requires External Setup)
 - ✅ E2E tests with Playwright - DONE

@@ -82,5 +82,5 @@ cd frontend
 npm run lint
 
 # Database
-docker compose exec postgres psql -U postgres -d redi_assessment
+docker compose exec db psql -U redi_admin -d redi_assessment
 ```

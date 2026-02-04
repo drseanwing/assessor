@@ -17,7 +17,7 @@ The REdI Assessment System enables multiple assessors to simultaneously evaluate
 
 ## Current Status
 
-**Phase 4: Dashboard - COMPLETE** ✅
+**Phase 6: Polish & Deploy - COMPLETE** ✅
 
 See [PROGRESS.md](PROGRESS.md) for detailed implementation status.
 
@@ -29,7 +29,7 @@ The fastest way to get started is using Docker Compose:
 
 ```bash
 # Copy environment template
-cp .env.example .env
+cp .env.docker .env
 
 # Start all services (PostgreSQL, API, Frontend, etc.)
 docker compose up -d
@@ -43,8 +43,6 @@ docker compose logs -f
 
 The application will be available at:
 - **Frontend**: http://localhost:7385
-- **Database UI**: http://localhost:7389
-- **API Gateway**: http://localhost:7387
 
 See [DOCKER.md](DOCKER.md) for detailed Docker setup instructions.
 
@@ -87,13 +85,20 @@ If you prefer manual setup, follow these steps:
 
 #### Database Setup
 
-1. **Option A: Using Supabase** (Recommended)
+1. **Option A: Docker Compose** (Recommended)
+   ```bash
+   # Use Docker Compose for easiest setup
+   docker compose up -d
+   # See DOCKER.md for detailed instructions
+   ```
+
+2. **Option B: Using Supabase** (Legacy/Alternative)
    ```bash
    # Create project at https://supabase.com
    # Copy your project URL and anon key
    ```
 
-2. **Option B: Self-hosted PostgreSQL**
+3. **Option C: Self-hosted PostgreSQL**
    ```bash
    createdb redi_assessment
    psql -d redi_assessment -f supabase/migrations/20260125_initial_schema.sql
@@ -136,16 +141,16 @@ See [frontend/README.md](frontend/README.md) for detailed frontend setup instruc
 ### Technology Stack
 
 **Backend/Database:**
-- PostgreSQL with Supabase
-- Real-time subscriptions for multi-assessor sync
+- PostgreSQL 16 with PostgREST 12
+- Express 4 worker for auth, WebSocket, and custom endpoints
 - Row Level Security for data access control
 
 **Frontend:**
-- React 18 + TypeScript
-- Vite (build tool)
+- React 19 + TypeScript
+- Vite 7 (build tool)
 - Tailwind CSS (styling)
 - Zustand (state management)
-- React Router (navigation)
+- React Router v7 (navigation)
 
 ### Project Structure
 
@@ -163,6 +168,16 @@ assessor/
 │   │   ├── lib/
 │   │   └── types/
 │   └── README.md
+├── worker/            # Express backend server
+│   └── src/
+│       ├── routes/    # API endpoints
+│       ├── services/  # Business logic
+│       └── middleware/ # Auth, CORS, etc.
+├── db/                # Database configuration
+│   └── init/          # Initialization scripts
+├── docs/              # Documentation
+├── docker-compose.yml # Docker orchestration
+├── nginx.conf         # Reverse proxy config
 ├── redi-assessment-spec.md  # Complete specification
 └── PROGRESS.md        # Implementation progress
 ```
@@ -192,14 +207,14 @@ assessor/
 - Feedback aggregation
 
 ### Phase 5: SharePoint Integration (Partial)
-- Course import from SharePoint
+- Course import from SharePoint (placeholder removed)
 - Participant sync
 - OAuth authentication
 
-### Phase 6: Polish & Deploy (In Progress)
-- Offline support
-- End-to-end tests
-- Production deployment
+### Phase 6: Polish & Deploy ✅ COMPLETE
+- Offline support ✅
+- End-to-end tests ✅
+- Production deployment ✅
 
 See [redi-assessment-spec.md](redi-assessment-spec.md) for complete specifications.
 
@@ -298,5 +313,5 @@ For issues, questions, or contributions, please open an issue on GitHub.
 
 ---
 
-**Project Status:** Phase 4 Complete - 89.7% Overall
-**Last Updated:** January 28, 2026
+**Project Status:** Phase 6 Complete - 90.8% Overall
+**Last Updated:** February 4, 2026
